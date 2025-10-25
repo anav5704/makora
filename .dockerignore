@@ -1,0 +1,17 @@
+.git
+.github
+.gitignore
+.nvmrc
+.vscode
+node_modules
+**/node_modules
+.pnpm
+.next
+dist
+packages/db/generated
+*.log
+.env*
+Dockerfile
+.dockerignore
+README.md
+biome.json
