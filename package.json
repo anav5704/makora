@@ -1,0 +1,25 @@
+{
+    "name": "makora",
+    "private": true,
+    "type": "module",
+    "workspaces": [
+        "apps/*",
+        "packages/*"
+    ],
+    "scripts": {
+        "check": "biome check",
+        "fix": "biome check --write",
+        "dev": "pnpm -r dev",
+        "build": "pnpm -r build",
+        "dev:web": "pnpm --filter web dev",
+        "db:push": "pnpm --filter @makora/db db:push",
+        "db:studio": "pnpm --filter @makora/db db:studio",
+        "db:generate": "pnpm --filter @makora/db db:generate"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "^2.2.0",
+        "tsdown": "^0.15.5",
+        "@types/node": "^22.13.11"
+    },
+    "packageManager": "pnpm@10.18.3"
+}

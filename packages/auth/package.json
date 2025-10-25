@@ -1,0 +1,28 @@
+{
+    "name": "@makora/auth",
+    "type": "module",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "default": "./src/index.ts"
+        },
+        "./*": {
+            "types": "./dist/*.d.ts",
+            "default": "./src/*.ts"
+        }
+    },
+    "scripts": {
+        "build": "tsdown"
+    },
+    "devDependencies": {
+        "tsdown": "catalog:tsdown"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    },
+    "dependencies": {
+        "better-auth": "catalog:better-auth",
+        "dotenv": "catalog:dotenv",
+        "@makora/db": "workspace:*"
+    }
+}
