@@ -5,6 +5,10 @@ const nextConfig: NextConfig = {
     reactCompiler: true,
     output: "standalone",
     reactStrictMode: false,
+    devIndicators: false,
+    experimental: {
+        optimizePackageImports: ["@chakra-ui/react"],
+    },
 };
 
 export default nextConfig;
