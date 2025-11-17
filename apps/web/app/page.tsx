@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import { Button } from "@chakra-ui/react"
-import { useQuery } from "@tanstack/react-query"
-import { api } from "@/lib/trpc"
+import { Button } from "@chakra-ui/react";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/trpc";
 
 export default function Home() {
-    const healthCheck = useQuery(api.healthCheck.queryOptions())
+    const healthCheck = useQuery(api.healthCheck.queryOptions());
 
     return (
         <main>
@@ -13,9 +13,9 @@ export default function Home() {
                 {healthCheck.isLoading
                     ? "Loading"
                     : healthCheck.data
-                        ? "Connected"
-                        : "Disconnected"}
+                      ? "Connected"
+                      : "Disconnected"}
             </Button>
         </main>
-    )
+    );
 }
