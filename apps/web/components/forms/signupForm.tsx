@@ -1,102 +1,86 @@
-"use client";
+"use client"
 
-import {
-    Button,
-    Center,
-    Field,
-    Fieldset,
-    Heading,
-    Input,
-} from "@chakra-ui/react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { PasswordInput } from "@/components/ui/password-input";
-import { toaster } from "@/components/ui/toaster";
-import { authClient } from "@/lib/auth";
+import { useRouter } from "next/navigation"
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { authClient } from "@/lib/auth"
+import { Fieldset } from "@headlessui/react"
+import { Header } from "../ui/header"
 
 export const SignupForm = () => {
-    const [loading, setLoading] = useState(false);
-    const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false)
+    const [name, setName] = useState("")
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
 
-    const router = useRouter();
+    const router = useRouter()
 
-    const handleSignup = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
+    const handleSignup = async () => {
+        setLoading(true)
 
         await authClient.signUp.email(
             {
-                name,
-                email,
-                password,
+                name: name,
+                email: email,
+                password: password,
             },
             {
                 onSuccess: () => {
-                    toaster.create({
-                        description: "Account successfuly created",
-                        type: "success",
-                    });
+                    router.push("/games")
+                    alert("Sign up successful")
                 },
                 onError: (error) => {
-                    console.log(error);
-
-                    toaster.create({
-                        description: "Error: could not create account",
-                        type: "error",
-                    });
+                    alert("Error: " + error.error.message)
                 },
             },
-        );
+        )
 
-        setLoading(false);
-    };
+        setLoading(false)
+    }
 
     return (
-        <>
-            <Heading
-                textAlign="center"
-                marginBottom={5}
-                fontWeight="bold"
-                size="4xl">
-                Create Account
-            </Heading>
-            <Center>
-                <Fieldset.Root size="lg" maxW="lg">
-                    <Field.Root>
-                        <Field.Label>Name</Field.Label>
-                        <Input
-                            name="name"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                        />
-                    </Field.Root>
-                    <Field.Root>
-                        <Field.Label>Email</Field.Label>
-                        <Input
-                            name="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                        />
-                    </Field.Root>
-                    <Field.Root>
-                        <Field.Label>Password</Field.Label>
-                        <PasswordInput
-                            name="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                        />
-                    </Field.Root>
+        <div className="max-w-sm mx-auto">
+          <Header text="Create Account"/>
 
-                    <Button
-                        onClick={handleSignup}
-                        loading={loading}
-                        disabled={loading}>
-                        Register
-                    </Button>
-                </Fieldset.Root>
-            </Center>
-        </>
-    );
-};
+            <Fieldset className="space-y-5">
+                <Input
+                    name="name"
+                    type="text"
+                    value={name}
+                    label="Name"
+                    onChange={(e) => setName(e.target.value)}
+                />
+
+                <Input
+                    name="email"
+                    type="email"
+                    value={email}
+                    label="Email"
+                    onChange={(e) => setEmail(e.target.value)}
+                />
+
+                <Input
+                    name="password"
+                    type="password"
+                    value={password}
+                    label="Password"
+                    onChange={(e) => setPassword(e.target.value)}
+                />
+
+                <Button
+                    label="Sign Up"
+                    loading={loading}
+                    onClick={handleSignup}
+                />
+            </Fieldset>
+
+            <p className="text-center mt-5 text-zinc-400">
+                Already have an account?{" "}
+                <a href="/signin" className="text-white underline">
+                    Sign In
+                </a>
+            </p>
+        </div>
+    )
+}
