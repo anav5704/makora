@@ -1,22 +1,22 @@
-"use client"
+"use client";
 
-import { Fieldset} from "@headlessui/react"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { authClient } from "@/lib/auth"
-import { Header } from "@/components/ui/header"
+import { Fieldset } from "@headlessui/react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Header } from "@/components/ui/header";
+import { Input } from "@/components/ui/input";
+import { authClient } from "@/lib/auth";
 
 export const SigninForm = () => {
-    const [loading, setLoading] = useState(false)
-    const [email, setEmail] = useState("")
-    const [password, setPassword] = useState("")
+    const [loading, setLoading] = useState(false);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
 
-    const router = useRouter()
+    const router = useRouter();
 
     const handleSignin = async () => {
-        setLoading(true)
+        setLoading(true);
 
         await authClient.signIn.email(
             {
@@ -25,22 +25,22 @@ export const SigninForm = () => {
             },
             {
                 onSuccess: () => {
-                    router.push("/dashboard")
-                    alert("Successfully signed in")
+                    router.push("/dashboard");
+                    alert("Successfully signed in");
                 },
                 onError: (error) => {
-                    console.log(error)
-                    alert("Error: could not sign in")
+                    console.log(error);
+                    alert("Error: could not sign in");
                 },
             },
-        )
+        );
 
-        setLoading(false)
-    }
+        setLoading(false);
+    };
 
     return (
         <div className="max-w-sm mx-auto">
-          <Header text="Welcome Back" />
+            <Header text="Welcome Back" />
 
             <Fieldset className="space-y-5">
                 <Input
@@ -73,5 +73,5 @@ export const SigninForm = () => {
                 </a>
             </p>
         </div>
-    )
-}
+    );
+};

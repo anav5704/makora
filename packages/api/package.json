@@ -25,6 +25,7 @@
         "@trpc/server": "catalog:trpc",
         "next": "catalog:next",
         "dotenv": "catalog:dotenv",
+        "zod": "catalog:zod",
         "@makora/auth": "workspace:*",
         "@makora/db": "workspace:*"
     }

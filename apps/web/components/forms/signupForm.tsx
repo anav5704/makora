@@ -1,23 +1,23 @@
-"use client"
+"use client";
 
-import { useRouter } from "next/navigation"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { authClient } from "@/lib/auth"
-import { Fieldset } from "@headlessui/react"
-import { Header } from "../ui/header"
+import { Fieldset } from "@headlessui/react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { authClient } from "@/lib/auth";
+import { Header } from "../ui/header";
 
 export const SignupForm = () => {
-    const [loading, setLoading] = useState(false)
-    const [name, setName] = useState("")
-    const [email, setEmail] = useState("")
-    const [password, setPassword] = useState("")
+    const [loading, setLoading] = useState(false);
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
 
-    const router = useRouter()
+    const router = useRouter();
 
     const handleSignup = async () => {
-        setLoading(true)
+        setLoading(true);
 
         await authClient.signUp.email(
             {
@@ -27,21 +27,21 @@ export const SignupForm = () => {
             },
             {
                 onSuccess: () => {
-                    router.push("/games")
-                    alert("Sign up successful")
+                    router.push("/onboarding");
+                    alert("Sign up successful");
                 },
                 onError: (error) => {
-                    alert("Error: " + error.error.message)
+                    alert("Error: " + error.error.message);
                 },
             },
-        )
+        );
 
-        setLoading(false)
-    }
+        setLoading(false);
+    };
 
     return (
         <div className="max-w-sm mx-auto">
-          <Header text="Create Account"/>
+            <Header text="Create Account" />
 
             <Fieldset className="space-y-5">
                 <Input
@@ -82,5 +82,5 @@ export const SignupForm = () => {
                 </a>
             </p>
         </div>
-    )
-}
+    );
+};

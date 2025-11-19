@@ -1,13 +1,15 @@
 model User {
-  id            String    @id @map("_id")
+  id            String         @id @map("_id")
   name          String
   email         String
   emailVerified Boolean
   image         String?
   createdAt     DateTime
   updatedAt     DateTime
+  boarded       Boolean?       @default(false)
   sessions      Session[]
   accounts      Account[]
+  chessAccounts ChessAccount[]
 
   @@unique([email])
   @@map("user")

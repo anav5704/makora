@@ -1,0 +1,17 @@
+model ChessAccount {
+  id        String   @id @map("_id")
+  platform  Platform
+  username  String
+  createdAt DateTime
+  updatedAt DateTime
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([username])
+  @@map("chess_account")
+}
+
+enum Platform {
+  CHESS_COM
+  LICHESS_ORG
+}

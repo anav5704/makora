@@ -150,6 +150,9 @@ importers:
       typescript:
         specifier: ^5
         version: 5.9.3
+      zod:
+        specifier: catalog:zod
+        version: 4.1.12
     devDependencies:
       tsdown:
         specifier: catalog:tsdown

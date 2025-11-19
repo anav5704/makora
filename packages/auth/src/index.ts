@@ -11,5 +11,16 @@ export const auth = betterAuth<BetterAuthOptions>({
     emailAndPassword: {
         enabled: true,
     },
+    user: {
+        additionalFields: {
+            boarded: {
+                type: "boolean",
+                defaultValue: false,
+            },
+        },
+    },
     plugins: [nextCookies()],
 });
+
+export type User = typeof auth.$Infer.Session.user;
+export type Session = typeof auth.$Infer.Session;

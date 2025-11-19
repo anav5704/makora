@@ -23,7 +23,7 @@ body {
     color: var(--foreground);
     font-family: var(--font-inter-tight), Arial, Helvetica, sans-serif;
 
-    @apply underline-offset-3
+    @apply text-base underline-offset-3
 }
 
 h1,
