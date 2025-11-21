@@ -9,26 +9,18 @@ import { Account, platforms } from "@/components/chess/account";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/ui/header";
 import { api } from "@/lib/trpc";
+import { Platform } from "@/types/chess";
 
 export const OnboardingForm = () => {
+    const { mutateAsync, isPending } = useMutation(api.user.onboard.mutationOptions());
     const [selectedPlatform, setSelectedPlatform] = useState(platforms[0]);
     const [username, setUsername] = useState("");
-    const [loading, setLoading] = useState(false);
 
     const handleOnboard = async () => {
-        setLoading(true);
-        try {
-            const { data, error, isPending } = useMutation(
-                api.user.onboard.queryOptions({
-                    platform: selectedPlatform,
-                    username,
-                }),
-            );
-        } catch (error) {
-            console.error("Error onboarding:", error);
-        } finally {
-            setLoading(false);
-        }
+      mutateAsync({
+        platform: selectedPlatform.value,
+        username
+      })
     };
 
     return (
@@ -51,7 +43,7 @@ export const OnboardingForm = () => {
 
                 <Button
                     label="Sign In"
-                    loading={loading}
+                    loading={isPending}
                     onClick={handleOnboard}
                 />
             </Fieldset>
