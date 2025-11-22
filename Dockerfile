@@ -10,6 +10,9 @@ COPY . .
 
 RUN pnpm install --frozen-lockfile
 
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
+
 RUN pnpm db:generate
 
 RUN pnpm -r build
