@@ -25,7 +25,9 @@
         "typescript": "^5"
     },
     "dependencies": {
+        "@prisma/adapter-pg": "catalog:prisma",
         "@prisma/client": "catalog:prisma",
-        "dotenv": "catalog:dotenv"
+        "dotenv": "catalog:dotenv",
+        "pg": "^8.16.3"
     }
 }

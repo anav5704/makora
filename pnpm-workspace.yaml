@@ -1,19 +1,22 @@
 packages:
-    - "apps/*"
-    - "packages/*"
+  - apps/*
+  - packages/*
 
 catalogs:
-    next:
-        "next": ^16.0.0
-    trpc:
-        "@trpc/client": ^11.6.0
-        "@trpc/server": ^11.6.0
-    better-auth:
-        "better-auth": ^1.3.29
-    prisma:
-        "prisma": latest
-        "@prisma/client": ^6.18.0
-    dotenv:
-        "dotenv": ^17.2.3
-    tsdown:
-        "tsdown": ^0.15.5
+  better-auth:
+    better-auth: ^1.3.29
+  dotenv:
+    dotenv: ^17.2.3
+  next:
+    next: ^16.0.0
+  prisma:
+    "@prisma/adapter-pg": "^7.0.0"
+    "@prisma/client": "^7.0.0"
+    prisma: "^7.0.0"
+  trpc:
+    "@trpc/client": ^11.6.0
+    "@trpc/server": ^11.6.0
+  tsdown:
+    tsdown: ^0.15.5
+  zod:
+    zod: ^4.1.12

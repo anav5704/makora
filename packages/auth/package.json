@@ -21,8 +21,8 @@
         "typescript": "^5"
     },
     "dependencies": {
+        "@makora/db": "workspace:*",
         "better-auth": "catalog:better-auth",
-        "dotenv": "catalog:dotenv",
-        "@makora/db": "workspace:*"
+        "dotenv": "catalog:dotenv"
     }
 }
