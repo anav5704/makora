@@ -1,17 +1,14 @@
-import { auth } from "@makora/auth";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { OnboardingForm } from "@/components/forms/onboardingForm";
+import { getSession } from "@/lib/session";
 
 export default async function OnboardingPage() {
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
+    const session = await getSession()
 
-    if (!session?.user) redirect("/signin");
+    if (!session) redirect("/signin");
 
-    // @ts-expect-error
-    if (session?.session.boarded) redirect("/dashboard");
+    // @ts-ignore
+    if (session?.user.boarded) redirect("/dashboard");
 
     return <OnboardingForm />;
 }

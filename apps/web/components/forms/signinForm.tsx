@@ -42,6 +42,10 @@ export const SigninForm = () => {
         <div className="max-w-sm mx-auto">
             <Header text="Welcome Back" />
 
+            <p className="text-center text-xl mb-5">
+                Sign in to your Makora Chess acocunt
+            </p>
+
             <Fieldset className="space-y-5">
                 <Input
                     name="email"

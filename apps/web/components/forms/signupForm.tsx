@@ -43,8 +43,12 @@ export const SignupForm = () => {
         <div className="max-w-sm mx-auto">
             <Header text="Create Account" />
 
+            <p className="text-center text-xl mb-5">
+                Enter your details to create an account
+            </p>
+
             <Fieldset className="space-y-5">
-                <Input
+                              <Input
                     name="name"
                     type="text"
                     value={name}

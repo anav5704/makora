@@ -10,7 +10,7 @@ interface ButonProps {
 export const Button = ({ label, loading, onClick }: ButonProps) => {
     return (
         <Root
-            className="bg-violet-500 px-4 py-2.5 rounded-md w-full text-white cusor-pointer disabled:cursor-not-allowed"
+            className="bg-violet-500 px-4 py-2.5 rounded-md w-full text-white cusor-pointer disabled:cursor-not-allowed disabled:opacity-50"
             onClick={onClick}
             disabled={loading}>
             {loading ? (

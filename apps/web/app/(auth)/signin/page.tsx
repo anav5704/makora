@@ -1,14 +1,11 @@
-import { auth } from "@makora/auth";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { SigninForm } from "@/components/forms/signinForm";
+import { getSession } from "@/lib/session";
 
 export default async function SignupPage() {
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
+    const session = await getSession()
 
-    if (session?.user) redirect("/dashboard");
+    if (session) redirect("/dashboard");
 
     return <SigninForm />;
 }

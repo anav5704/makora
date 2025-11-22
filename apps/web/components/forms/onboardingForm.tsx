@@ -10,11 +10,18 @@ import { Button } from "@/components/ui/button";
 import { Header } from "@/components/ui/header";
 import { api } from "@/lib/trpc";
 import { Platform } from "@/types/chess";
+import { useRouter } from "next/navigation";
 
 export const OnboardingForm = () => {
-    const { mutateAsync, isPending } = useMutation(api.user.onboard.mutationOptions());
     const [selectedPlatform, setSelectedPlatform] = useState(platforms[0]);
     const [username, setUsername] = useState("");
+    const router = useRouter()
+
+    const { mutateAsync, isPending } = useMutation(api.user.onboard.mutationOptions({
+      onSuccess: () => {
+          router.push("/dashboard")
+      },
+    }));
 
     const handleOnboard = async () => {
       mutateAsync({
@@ -29,8 +36,6 @@ export const OnboardingForm = () => {
 
             <p className="text-center text-lg mb-5">
                 Link your chess account to get started
-                <br />
-                You can link more acocunts later
             </p>
 
             <Fieldset className="space-y-5">
@@ -47,6 +52,10 @@ export const OnboardingForm = () => {
                     onClick={handleOnboard}
                 />
             </Fieldset>
+
+            <p className="text-center mt-5 text-zinc-400">
+                You can add more accounts later
+            </p>
         </div>
     );
 };
