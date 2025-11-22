@@ -18,11 +18,14 @@ catalogs:
       specifier: ^16.0.0
       version: 16.0.0
   prisma:
+    '@prisma/adapter-pg':
+      specifier: ^7.0.0
+      version: 7.0.0
     '@prisma/client':
-      specifier: 7.0.0
+      specifier: ^7.0.0
       version: 7.0.0
     prisma:
-      specifier: 7.0.0
+      specifier: ^7.0.0
       version: 7.0.0
   trpc:
     '@trpc/client':
@@ -68,9 +71,6 @@ importers:
       '@prisma/client':
         specifier: catalog:prisma
         version: 7.0.0(prisma@7.0.0(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@tanstack/react-form':
-        specifier: ^1.25.0
-        version: 1.25.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@tanstack/react-query':
         specifier: ^5.85.5
         version: 5.90.5(react@19.2.0)
@@ -180,7 +180,7 @@ importers:
   packages/db:
     dependencies:
       '@prisma/adapter-pg':
-        specifier: ^7.0.0
+        specifier: catalog:prisma
         version: 7.0.0
       '@prisma/client':
         specifier: catalog:prisma
@@ -908,48 +908,19 @@ packages:
   '@tailwindcss/postcss@4.1.15':
     resolution: {integrity: sha512-IZh8IT76KujRz6d15wZw4eoeViT4TqmzVWNNfpuNCTKiaZUwgr5vtPqO4HjuYDyx3MgGR5qgPt1HMzTeLJyA3g==}
 
-  '@tanstack/devtools-event-client@0.3.5':
-    resolution: {integrity: sha512-RL1f5ZlfZMpghrCIdzl6mLOFLTuhqmPNblZgBaeKfdtk5rfbjykurv+VfYydOFXj0vxVIoA2d/zT7xfD7Ph8fw==}
-    engines: {node: '>=18'}
-
-  '@tanstack/form-core@1.25.0':
-    resolution: {integrity: sha512-OEWW2uTOFMyRmHrVEiPOn+J27ekQ/vXwRAJt9kD8U8vCt8CmpClj989OOGGSBSVJtDNxGUcWyKF8gYznnqIyaw==}
-
-  '@tanstack/pacer@0.15.4':
-    resolution: {integrity: sha512-vGY+CWsFZeac3dELgB6UZ4c7OacwsLb8hvL2gLS6hTgy8Fl0Bm/aLokHaeDIP+q9F9HUZTnp360z9uv78eg8pg==}
-    engines: {node: '>=18'}
-
   '@tanstack/query-core@5.90.5':
     resolution: {integrity: sha512-wLamYp7FaDq6ZnNehypKI5fNvxHPfTYylE0m/ZpuuzJfJqhR5Pxg9gvGBHZx4n7J+V5Rg5mZxHHTlv25Zt5u+w==}
-
-  '@tanstack/react-form@1.25.0':
-    resolution: {integrity: sha512-SjKpBkjegNVW9WU+qlO8+/+kSbSEwo2zwHnrQz/yOnnJRhtdgubUt50LfeUtdzkMsbbptQ5MSZrXH03kidQjyw==}
-    peerDependencies:
-      '@tanstack/react-start': '*'
-      react: ^17.0.0 || ^18.0.0 || ^19.0.0
-    peerDependenciesMeta:
-      '@tanstack/react-start':
-        optional: true
 
   '@tanstack/react-query@5.90.5':
     resolution: {integrity: sha512-pN+8UWpxZkEJ/Rnnj2v2Sxpx1WFlaa9L6a4UO89p6tTQbeo+m0MS8oYDjbggrR8QcTyjKoYWKS3xJQGr3ExT8Q==}
     peerDependencies:
       react: ^18 || ^19
 
-  '@tanstack/react-store@0.7.7':
-    resolution: {integrity: sha512-qqT0ufegFRDGSof9D/VqaZgjNgp4tRPHZIJq2+QIHkMUtHjaJ0lYrrXjeIUJvjnTbgPfSD1XgOMEt0lmANn6Zg==}
-    peerDependencies:
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-
   '@tanstack/react-virtual@3.13.12':
     resolution: {integrity: sha512-Gd13QdxPSukP8ZrkbgS2RwoZseTTbQPLnQEn7HY/rqtM+8Zt95f7xKC7N0EsKs7aoz0WzZ+fditZux+F8EzYxA==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-
-  '@tanstack/store@0.7.7':
-    resolution: {integrity: sha512-xa6pTan1bcaqYDS9BDpSiS63qa6EoDkPN9RsRaxHuDdVDNntzq3xNwR5YKTU/V3SkSyC9T4YVOPh2zRQN0nhIQ==}
 
   '@tanstack/virtual-core@3.13.12':
     resolution: {integrity: sha512-1YBOJfRHV4sXUmWsFSf5rQor4Ss82G8dQWLRbnk3GA4jeP8hQt1hxXh0tmflpC0dz3VgEv/1+qwPyLeWkQuPFA==}
@@ -2408,48 +2379,18 @@ snapshots:
       postcss: 8.5.6
       tailwindcss: 4.1.15
 
-  '@tanstack/devtools-event-client@0.3.5': {}
-
-  '@tanstack/form-core@1.25.0':
-    dependencies:
-      '@tanstack/devtools-event-client': 0.3.5
-      '@tanstack/pacer': 0.15.4
-      '@tanstack/store': 0.7.7
-
-  '@tanstack/pacer@0.15.4':
-    dependencies:
-      '@tanstack/devtools-event-client': 0.3.5
-      '@tanstack/store': 0.7.7
-
   '@tanstack/query-core@5.90.5': {}
-
-  '@tanstack/react-form@1.25.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
-    dependencies:
-      '@tanstack/form-core': 1.25.0
-      '@tanstack/react-store': 0.7.7(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      react: 19.2.0
-    transitivePeerDependencies:
-      - react-dom
 
   '@tanstack/react-query@5.90.5(react@19.2.0)':
     dependencies:
       '@tanstack/query-core': 5.90.5
       react: 19.2.0
 
-  '@tanstack/react-store@0.7.7(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
-    dependencies:
-      '@tanstack/store': 0.7.7
-      react: 19.2.0
-      react-dom: 19.2.0(react@19.2.0)
-      use-sync-external-store: 1.6.0(react@19.2.0)
-
   '@tanstack/react-virtual@3.13.12(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
     dependencies:
       '@tanstack/virtual-core': 3.13.12
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
-
-  '@tanstack/store@0.7.7': {}
 
   '@tanstack/virtual-core@3.13.12': {}
 
