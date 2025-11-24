@@ -1,3 +1,5 @@
+import { Title } from "@/components/ui/title";
+
 export default function DashboardPage() {
-    return <h1>Dashbaord</h1>;
+    return <Title title="Dashboard" />;
 }

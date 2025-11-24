@@ -1,3 +1,5 @@
+import { Title } from "@/components/ui/title";
+
 export default function InsightsPage() {
-    return <div></div>;
+    return <Title title="Insights" />;
 }

@@ -9,7 +9,7 @@ import {
     ListboxOptions,
 } from "@headlessui/react";
 import { ChevronDown } from "lucide-react";
-import { Platform } from "@/types/chess";
+import type { Platform } from "@/types/chess";
 
 interface Option {
     id: number;

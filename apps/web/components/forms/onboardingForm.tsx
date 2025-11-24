@@ -4,30 +4,32 @@
 
 import { Fieldset } from "@headlessui/react";
 import { useMutation } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Account, platforms } from "@/components/chess/account";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/ui/header";
 import { api } from "@/lib/trpc";
 import { Platform } from "@/types/chess";
-import { useRouter } from "next/navigation";
 
 export const OnboardingForm = () => {
     const [selectedPlatform, setSelectedPlatform] = useState(platforms[0]);
     const [username, setUsername] = useState("");
-    const router = useRouter()
+    const router = useRouter();
 
-    const { mutateAsync, isPending } = useMutation(api.user.onboard.mutationOptions({
-      onSuccess: () => {
-          router.push("/dashboard")
-      },
-    }));
+    const { mutateAsync, isPending } = useMutation(
+        api.user.onboard.mutationOptions({
+            onSuccess: () => {
+                router.push("/dashboard");
+            },
+        }),
+    );
 
     const handleOnboard = async () => {
-      mutateAsync({
-        platform: selectedPlatform.value,
-        username
-      })
+        mutateAsync({
+            platform: selectedPlatform.value,
+            username,
+        });
     };
 
     return (

@@ -48,7 +48,7 @@ export const SignupForm = () => {
             </p>
 
             <Fieldset className="space-y-5">
-                              <Input
+                <Input
                     name="name"
                     type="text"
                     value={name}

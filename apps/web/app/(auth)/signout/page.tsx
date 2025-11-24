@@ -1,10 +1,10 @@
-import { getSession } from "@/lib/session";
 import { auth } from "@makora/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { getSession } from "@/lib/session";
 
 export default async function SignoutPage() {
-    const session = await getSession()
+    const session = await getSession();
 
     if (!session) redirect("/signin");
 

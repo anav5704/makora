@@ -1,3 +1,5 @@
+import { Title } from "@/components/ui/title";
+
 export default function GamePage() {
-    return <div></div>;
+    return <Title title="Games/[id]" />;
 }

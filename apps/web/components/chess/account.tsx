@@ -9,7 +9,11 @@ const platforms = [
 
 interface AccountProps {
     selectedPlatform: { id: number; name: string; value: Platform };
-    setSelectedPlatform: (platform: { id: number; name: string; value: Platform }) => void;
+    setSelectedPlatform: (platform: {
+        id: number;
+        name: string;
+        value: Platform;
+    }) => void;
     username: string;
     setUsername: (username: string) => void;
 }

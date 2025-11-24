@@ -11,24 +11,23 @@ export const userRouter = router({
             }),
         )
         .mutation(async ({ input, ctx }) => {
-          const userId = ctx.session.user.id
+            const userId = ctx.session.user.id;
 
             await db.chessAccount.create({
                 data: {
                     platform: input.platform,
                     username: input.username,
-                    userId
+                    userId,
                 },
             });
 
             await db.user.update({
                 data: {
-                  boarded: true
+                    boarded: true,
                 },
                 where: {
-                  id: userId
-                }
-            })
+                    id: userId,
+                },
+            });
         }),
-
 });
