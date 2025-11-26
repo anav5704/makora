@@ -17,7 +17,7 @@ export const NavLink = ({
     return (
         <Link
             href={{ pathname: href }}
-            className={`${isActive && "bg-zinc-800"} flex gap-3 p-3 hover:bg-zinc-800 rounded-md`}>
+            className={`${isActive && "bg-violet-500"} flex gap-3 p-3 rounded-md transition`}>
             <Icon size={24} />
             {label}
         </Link>

@@ -1,12 +1,27 @@
+import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../prisma/generated/client";
+import { PrismaClient as PostgreClient } from "../postgres/generated/client";
+import { PrismaClient as SqliteClient } from "../sqlite/generated/client";
 
-const adapter = new PrismaPg({
-    connectionString: process.env.DATABASE_URL,
+const postgresAdapter = new PrismaPg({
+    connectionString: process.env.POSTGRES_DATABASE_URL,
 });
 
-const db: PrismaClient = new PrismaClient({ adapter });
+const postgresDb: PostgreClient = new PostgreClient({
+  adapter: postgresAdapter,
+});
 
-export * from "../prisma/generated/client";
+const sqliteAdapter = new PrismaBetterSqlite3({
+    url: process.env.SQLITE_DATABASE_URL,
+});
 
-export { db };
+const sqliteDb: SqliteClient = new SqliteClient({
+    adapter: sqliteAdapter,
+});
+
+export const db = {
+    postgres: postgresDb,
+    sqlite: sqliteDb,
+};
+
+export * from "../postgres/generated/client";

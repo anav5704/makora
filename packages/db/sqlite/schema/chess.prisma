@@ -1,0 +1,8 @@
+model Opening {
+    id   Int    @id @default(autoincrement()) @map("id")
+    eco  String
+    name String
+    pgn  String
+
+    @@map("opening")
+}
