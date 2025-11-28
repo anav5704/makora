@@ -10,10 +10,9 @@ catalogs:
   next:
     next: ^16.0.0
   prisma:
-    "@prisma/adapter-better-sqlite3": "^7.0.1"
-    "@prisma/adapter-pg": "^7.0.0"
-    "@prisma/client": "^7.0.0"
-    prisma: "^7.0.0"
+    "@prisma/adapter-pg": ^7.0.0
+    "@prisma/client": ^7.0.0
+    prisma: 7.0.0
   trpc:
     "@trpc/client": ^11.6.0
     "@trpc/server": ^11.6.0

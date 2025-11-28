@@ -1,5 +1,5 @@
 model Opening {
-    id   Int    @id @default(autoincrement()) @map("id")
+    id   Int    @id @default(autoincrement()) @map("_id")
     eco  String
     name String
     pgn  String

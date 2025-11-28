@@ -9,6 +9,6 @@ dotenv.config({
 export default defineConfig({
     schema: path.join("schema"),
     datasource: {
-        url: env("POSTGRES_DATABASE_URL"),
+        url: env("DATABASE_URL"),
     },
 });

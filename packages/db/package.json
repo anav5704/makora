@@ -13,9 +13,10 @@
     },
     "scripts": {
         "build": "tsdown",
-        "db:studio": "cd postgres && prisma studio",
-        "db:push": "cd postgres && prisma db push && cd ../sqlite && prisma db push",
-        "db:generate": "cd postgres && prisma generate && cd ../sqlite && prisma generate"
+        "db:studio": "cd libsql && prisma studio",
+        "db:seed": "cd libsql && prisma db seed",
+        "db:push": "cd postgres && prisma db push && cd ../libsql && prisma db push",
+        "db:generate": "cd postgres && prisma generate && cd ../libsql && prisma generate"
     },
     "devDependencies": {
         "prisma": "catalog:prisma",
@@ -25,8 +26,8 @@
         "typescript": "^5"
     },
     "dependencies": {
-      "@prisma/adapter-better-sqlite3": "catalog:prisma",
-        "@prisma/adapter-pg": "catalog:prisma",
+        "@prisma/adapter-libsql": "^7.0.1",
+        "@prisma/adapter-pg": "^7.0.1",
         "@prisma/client": "catalog:prisma",
         "dotenv": "catalog:dotenv",
         "pg": "^8.16.3"

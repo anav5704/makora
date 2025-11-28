@@ -1,6 +1,6 @@
 import path from "node:path";
 import dotenv from "dotenv";
-import { defineConfig, env } from "prisma/config";
+import { defineConfig } from "prisma/config";
 
 dotenv.config({
     path: "../../../apps/web/.env",
@@ -8,7 +8,10 @@ dotenv.config({
 
 export default defineConfig({
     schema: path.join("schema"),
+    migrations: {
+        seed: "pnpx tsx seed.ts",
+    },
     datasource: {
-        url: env("SQLITE_DATABASE_URL"),
+        url: "file:openings.db",
     },
 });
