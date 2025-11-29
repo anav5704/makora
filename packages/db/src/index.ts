@@ -1,23 +1,22 @@
-import { PrismaLibSql } from '@prisma/adapter-libsql'
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient as PostgreClient } from "../postgres/generated/client";
-import { PrismaClient as LibSqlClient } from "../libsql/generated/client";
+import { PrismaClient as MainClient } from "../main/generated/client";
+import { PrismaClient as ChessClient } from "../chess/generated/client"
 
-const postgres: PostgreClient = new PostgreClient({
+const main: MainClient = new MainClient({
     adapter:new PrismaPg({
-        connectionString: process.env.DATABASE_URL,
+        connectionString: process.env.MAKORA_DATABASE_URL,
     }) ,
 });
 
-const libsql: LibSqlClient = new LibSqlClient({
-    adapter: new PrismaLibSql({
-    url: "file:../libsql/openings.db",
+const chess: ChessClient = new ChessClient({
+    adapter: new PrismaPg({
+      connectionString: process.env.CHESS_DATABASE_URL,
 }),
 });
 
 export const db = {
-    postgres,
-    libsql,
+    main,
+    chess,
 };
 
-export * from "../postgres/generated/client";
+export * from "../main/generated/client";

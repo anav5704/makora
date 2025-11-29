@@ -13,7 +13,7 @@ export const userRouter = router({
         .mutation(async ({ input, ctx }) => {
             const userId = ctx.session.user.id;
 
-            await db.postgres.chessAccount.create({
+            await db.main.chessAccount.create({
                 data: {
                     platform: input.platform,
                     username: input.username,
@@ -21,7 +21,7 @@ export const userRouter = router({
                 },
             });
 
-            await db.postgres.user.update({
+            await db.main.user.update({
                 data: {
                     boarded: true,
                 },

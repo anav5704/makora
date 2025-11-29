@@ -10,6 +10,7 @@
         "@headlessui/react": "^2.2.9",
         "@makora/api": "workspace:*",
         "@makora/auth": "workspace:*",
+        "@makora/db": "workspace:*",
         "@prisma/client": "catalog:prisma",
         "@tanstack/react-query": "^5.85.5",
         "@trpc/client": "catalog:trpc",

@@ -1,9 +1,6 @@
 # dependencies (bun install)
 node_modules
 
-# raw chess openings
-*.tsv
-
 # output
 out
 dist

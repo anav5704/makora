@@ -10,7 +10,6 @@ catalogs:
   next:
     next: ^16.0.0
   prisma:
-    "@prisma/adapter-pg": ^7.0.0
     "@prisma/client": ^7.0.0
     prisma: 7.0.0
   trpc:

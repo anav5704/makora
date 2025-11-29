@@ -9,6 +9,6 @@ dotenv.config({
 export default defineConfig({
     schema: path.join("schema"),
     datasource: {
-        url: env("DATABASE_URL"),
+        url: env("MAKORA_DATABASE_URL"),
     },
 });

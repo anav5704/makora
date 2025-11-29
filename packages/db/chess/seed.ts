@@ -7,7 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function main() {
   // reset db
-  await db.libsql.opening.deleteMany();
+  await db.chess.opening.deleteMany();
 
   // read data from a-e.tsv files
   const files = ['a.tsv', 'b.tsv', 'c.tsv', 'd.tsv', 'e.tsv'];
@@ -28,7 +28,7 @@ async function main() {
       const [eco, name, pgn] = parts;
       if (!eco || !name || !pgn) continue;
 
-      await db.libsql.opening.create({
+      await db.chess.opening.create({
         data: {
           eco,
           name,
@@ -38,16 +38,16 @@ async function main() {
     }
   }
 
-  const count = await db.libsql.opening.count();
+  const count = await db.chess.opening.count();
   console.log(`Seeded database with ${count} openings`);
 }
 
 main()
   .then(async () => {
-    await db.libsql.$disconnect()
+    await db.chess.$disconnect()
   })
   .catch(async (e) => {
     console.error(e)
-    await db.libsql.$disconnect()
+    await db.chess.$disconnect()
     process.exit(1)
   })
