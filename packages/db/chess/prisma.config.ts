@@ -12,6 +12,6 @@ export default defineConfig({
         seed: "pnpx tsx seed.ts",
     },
     datasource: {
-      url: env("CHESS_DATABASE_URL"),
+        url: env("CHESS_DATABASE_URL"),
     },
 });

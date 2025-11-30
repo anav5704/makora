@@ -5,6 +5,8 @@ packages:
 catalogs:
   better-auth:
     better-auth: ^1.3.29
+  chess:
+    chess.js: ^1.4.0
   dotenv:
     dotenv: ^17.2.3
   next:

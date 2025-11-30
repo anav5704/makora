@@ -4,7 +4,7 @@ import { userRouter } from "./user";
 
 export const appRouter = router({
     user: userRouter,
-    chess: chessRouter
+    chess: chessRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -28,6 +28,7 @@
     "dependencies": {
         "@prisma/adapter-pg": "^7.0.1",
         "@prisma/client": "catalog:prisma",
+        "chess.js": "catalog:chess",
         "dotenv": "catalog:dotenv",
         "pg": "^8.16.3"
     }
