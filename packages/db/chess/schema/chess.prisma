@@ -3,6 +3,8 @@ model Opening {
     eco  String
     name String
     pgn  String
+    fen String
 
     @@map("opening")
+    @@index([fen])
 }
