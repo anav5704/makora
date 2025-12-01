@@ -8,7 +8,7 @@ model ChessAccount {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   games     Game[]
 
-  @@unique([username])
+  @@unique([platform, username])
   @@map("chess_account")
 }
 

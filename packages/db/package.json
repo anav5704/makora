@@ -13,7 +13,7 @@
     },
     "scripts": {
         "build": "tsdown",
-        "db:studio": "cd chess && prisma studio",
+        "db:studio": "cd main && prisma studio",
         "db:seed": "cd chess && prisma db seed",
         "db:push": "cd main && prisma db push && cd ../chess && prisma db push",
         "db:generate": "cd main && prisma generate && cd ../chess && prisma generate"
