@@ -1,7 +1,7 @@
 import { db, Color, GamePhase, Termination, TimeControl } from '@makora/db';
 import { Chess } from 'chess.js';
 
-interface ParsedPgn {
+export interface ParsedPgn {
 	url: string;
 	opponent: string;
 	date: Date;
@@ -55,10 +55,11 @@ const getDate = (date: string): Date => {
 
 const getOpening = async (pgn: string): Promise<string> => {
 	let bestOpening: string = 'Unknown Opening';
-	const game = new Chess();
-	game.loadPgn(pgn);
+	const board = new Chess()
+	board.loadPgn(pgn);
+	const moves = board.history();
 
-	const moves = game.history();
+	const game = new Chess();
 
 	for(const move of moves) {
 	  game.move(move)
@@ -82,6 +83,7 @@ const getOpening = async (pgn: string): Promise<string> => {
 };
 
 export const parsePgn = async ({ username, pgn }: { username: string; pgn: string }) => {
+  console.log(pgn)
 	const game = new Chess();
 	game.loadPgn(pgn);
 
