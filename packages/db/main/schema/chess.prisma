@@ -19,7 +19,7 @@ enum Platform {
 
 model Game {
   id          String       @id @default(uuid()) @map("_id")
-  pgn         String       @unique
+  moves         String
   url         String
   opponent    String
   date        DateTime

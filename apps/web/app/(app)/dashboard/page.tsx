@@ -6,17 +6,16 @@ import { api } from "@/lib/trpc";
 
 export default function DashboardPage() {
     const { data: games } = useQuery(api.chess.sync.queryOptions());
-    console.log(games)
 
     return (
         <main>
             <Title title="Dashboard" />
             <ul>
-              {games?.map((game, i) => (
-              <li key={i} className="block">
-                {game.opening}
-              </li>
-              ))}
+                {games?.map((game, i) => (
+                    <li key={i} className="block">
+                        {game.opening}
+                    </li>
+                ))}
             </ul>
         </main>
     );
