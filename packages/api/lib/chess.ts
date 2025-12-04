@@ -48,11 +48,22 @@ const getUrl = (headers: Record<string, string>): string => {
 };
 
 const getMoveCount = (history: string[]): number => {
-    return history.length / 2;
+    return Math.ceil(history.length / 2);
 };
 
-const getDate = (date: string): Date => {
-    return new Date(date);
+const getDate = (headers: Record<string, string>): Date => {
+    const date = headers.UTCDate || headers.Date;
+    const time = headers.UTCTime ?? "00:00:00";
+
+    if (!date) return new Date();
+
+    const normalizedDate = date.replace(/\./g, "-");
+
+    const [year, month, day] = normalizedDate.split("-").map(Number);
+    const [hour, min, sec] = time.split(":").map(Number);
+
+    //@ts-expect-error
+    return new Date(Date.UTC(year, month - 1, day, hour, min, sec));
 };
 
 const getOpening = async (pgn: string): Promise<string> => {
@@ -104,7 +115,7 @@ export const parsePgn = async ({
             getColor(username, headers.White as string),
             headers,
         ),
-        date: getDate(headers.Date as string),
+        date: getDate(headers),
         timeControl: getTimeControl(headers.TimeControl as string),
         opening: await getOpening(pgn),
         moveCount: getMoveCount(history),

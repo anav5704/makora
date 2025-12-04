@@ -1,22 +1,27 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
 import { Title } from "@/components/ui/title";
 import { api } from "@/lib/trpc";
 
 export default function DashboardPage() {
-    const { data: games } = useQuery(api.chess.sync.queryOptions());
+    const { mutateAsync, isPending } = useMutation(
+        api.chess.sync.mutationOptions(),
+    );
+    const handleSync = async () => mutateAsync();
 
     return (
         <main>
             <Title title="Dashboard" />
-            <ul>
+            <Button label="Sync" onClick={handleSync} loading={isPending} />
+            {/*<ul>
                 {games?.map((game, i) => (
                     <li key={i} className="block">
                         {game.opening}
                     </li>
                 ))}
-            </ul>
+            </ul>*/}
         </main>
     );
 }

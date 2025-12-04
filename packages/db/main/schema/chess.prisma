@@ -1,11 +1,12 @@
 model ChessAccount {
-  id        String   @id @default(uuid()) @map("_id")
+  id        String    @id @default(uuid()) @map("_id")
   platform  Platform
   username  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  syncedAt  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   games     Game[]
 
   @@unique([platform, username])
@@ -19,7 +20,7 @@ enum Platform {
 
 model Game {
   id          String       @id @default(uuid()) @map("_id")
-  moves         String
+  moves       String
   url         String
   opponent    String
   date        DateTime
