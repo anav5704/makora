@@ -102,7 +102,6 @@ export const parsePgn = async ({
     username: string;
     pgn: string;
 }) => {
-    console.log(pgn);
     const game = new Chess();
     game.loadPgn(pgn);
 
