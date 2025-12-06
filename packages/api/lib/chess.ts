@@ -2,6 +2,7 @@ import { Color, db, GamePhase, Termination, TimeControl } from "@makora/db";
 import { Chess } from "chess.js";
 
 export interface ParsedPgn {
+    moves: string[];
     url: string;
     opponent: string;
     date: Date;
@@ -24,9 +25,7 @@ const getColor = (username: string, white: string): Color => {
 };
 
 const getOpponent = (color: Color, headers: Record<string, string>): string => {
-    return color === Color.WHITE
-        ? (headers.Black as string)
-        : (headers.White as string);
+    return color === Color.WHITE ? (headers.Black as string) : (headers.White as string);
 };
 
 const getTimeControl = (time: string): TimeControl => {
@@ -66,6 +65,13 @@ const getDate = (headers: Record<string, string>): Date => {
     return new Date(Date.UTC(year, month - 1, day, hour, min, sec));
 };
 
+const getMoves = (pgn: string): string[] => {
+    const board = new Chess();
+    board.loadPgn(pgn);
+
+    return board.history();
+};
+
 const getOpening = async (pgn: string): Promise<string> => {
     let bestOpening: string = "Unknown Opening";
     const board = new Chess();
@@ -95,13 +101,7 @@ const getOpening = async (pgn: string): Promise<string> => {
     return bestOpening;
 };
 
-export const parsePgn = async ({
-    username,
-    pgn,
-}: {
-    username: string;
-    pgn: string;
-}) => {
+export const parsePgn = async ({ username, pgn }: { username: string; pgn: string }) => {
     const game = new Chess();
     game.loadPgn(pgn);
 
@@ -109,11 +109,9 @@ export const parsePgn = async ({
     const history = game.history();
 
     const parsedPgn: ParsedPgn = {
+        moves: getMoves(pgn),
         url: getUrl(headers),
-        opponent: getOpponent(
-            getColor(username, headers.White as string),
-            headers,
-        ),
+        opponent: getOpponent(getColor(username, headers.White as string), headers),
         date: getDate(headers),
         timeControl: getTimeControl(headers.TimeControl as string),
         opening: await getOpening(pgn),

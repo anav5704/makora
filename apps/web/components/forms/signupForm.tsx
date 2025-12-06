@@ -43,18 +43,10 @@ export const SignupForm = () => {
         <div className="max-w-sm mx-auto">
             <Header text="Create Account" />
 
-            <p className="text-center text-xl mb-5">
-                Enter your details to create an account
-            </p>
+            <p className="text-center text-xl mb-5">Enter your details to create an account</p>
 
             <Fieldset className="space-y-5">
-                <Input
-                    name="name"
-                    type="text"
-                    value={name}
-                    label="Name"
-                    onChange={(e) => setName(e.target.value)}
-                />
+                <Input name="name" type="text" value={name} label="Name" onChange={(e) => setName(e.target.value)} />
 
                 <Input
                     name="email"
@@ -72,11 +64,7 @@ export const SignupForm = () => {
                     onChange={(e) => setPassword(e.target.value)}
                 />
 
-                <Button
-                    label="Sign Up"
-                    loading={loading}
-                    onClick={handleSignup}
-                />
+                <Button label="Sign Up" loading={loading} onClick={handleSignup} />
             </Fieldset>
 
             <p className="text-center mt-5 text-zinc-400">

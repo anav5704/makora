@@ -1,14 +1,7 @@
 {
     "$schema": "https://biomejs.dev/schemas/2.2.7/schema.json",
     "files": {
-        "includes": [
-            "**",
-            "!**/.docker",
-            "!**/.next",
-            "!**/dist",
-            "!**/node_modules",
-            "!packages/db/generated"
-        ]
+        "includes": ["**", "!**/.docker", "!**/.next", "!**/dist", "!**/node_modules", "!packages/db/generated"]
     },
     "vcs": {
         "enabled": true,
@@ -16,6 +9,7 @@
         "useIgnoreFile": true
     },
     "formatter": {
+        "lineWidth": 120,
         "enabled": true,
         "indentStyle": "space",
         "indentWidth": 4,

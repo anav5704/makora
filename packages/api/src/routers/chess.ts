@@ -1,9 +1,11 @@
+// TODO: implement database transactions
 import { db, Platform } from "@makora/db";
 import { type ParsedPgn, parsePgn } from "../../lib/chess";
 import { publicProcedure, router } from "../index";
 
 export const chessRouter = router({
     sync: publicProcedure.mutation(async ({ ctx }) => {
+        const syncStart = new Date();
         const accounts = await db.main.chessAccount.findMany({
             where: {
                 userId: ctx.session?.user.id,
@@ -16,41 +18,30 @@ export const chessRouter = router({
             },
         });
 
-        const games: ParsedPgn[] = [];
-
         for (const { id, username, platform, syncedAt } of accounts) {
             if (platform === Platform.CHESS_COM) {
+                const games: ParsedPgn[] = [];
                 let archives: string[] = [];
 
-                const res = await fetch(
-                    `https://api.chess.com/pub/player/${username}/games/archives`,
-                );
+                const res = await fetch(`https://api.chess.com/pub/player/${username}/games/archives`);
 
                 if (res.ok) {
                     const data = (await res.json()) as { archives: string[] };
 
                     if (syncedAt) {
-                        const minMonth = new Date(
-                            syncedAt.getFullYear(),
-                            syncedAt.getMonth(),
-                            1,
-                        );
+                        const minMonth = new Date(syncedAt.getFullYear(), syncedAt.getMonth(), 1);
 
                         const newArchivces = data.archives.filter((a) => {
-                            const [yearStr, monthStr] = a
-                                .split("/")
-                                .slice(-2)
-                                .map(Number);
+                            const [yearStr, monthStr] = a.split("/").slice(-2).map(Number);
                             const year = Number(yearStr);
                             const month = Number(monthStr);
                             const archiveMonth = new Date(year, month - 1);
                             return archiveMonth >= minMonth;
                         });
 
-                        //@ts-expect-error
-                        archives = newArchivces.slice(0, 1);
+                        archives = newArchivces;
                     } else {
-                        archives = data.archives.slice(0, 1);
+                        archives = data.archives;
                     }
                 }
 
@@ -63,44 +54,44 @@ export const chessRouter = router({
                         };
 
                         if (data.games.length) {
-                            let counter = 0;
                             for (const { pgn } of data.games) {
-                                if (counter === 2) break;
-
                                 const { parsedPgn } = await parsePgn({
                                     username,
                                     pgn,
                                 });
 
-                                console.log("DATE", parsedPgn.date);
-
-                                if (
-                                    parsedPgn.date?.getTime() >
-                                    syncedAt?.getTime()
-                                ) {
-                                    games.push(parsedPgn);
-                                    counter++;
-                                }
+                                // @ts-expect-error
+                                if (parsedPgn.date?.getTime() > syncedAt?.getTime()) games.push(parsedPgn);
                             }
                         }
                     }
                 }
+
+                await db.main.game.createMany({
+                    data: games.map((game) => ({
+                        accountId: id,
+                        ...game,
+                    })),
+                });
 
                 await db.main.chessAccount.update({
                     where: {
                         id,
                     },
                     data: {
-                        syncedAt: games.at(-1)?.date,
+                        syncedAt: syncStart,
                     },
                 });
+
+                console.log(games);
             }
 
             if (platform === Platform.LICHESS_ORG) {
+                const games: ParsedPgn[] = [];
                 let url = `https://lichess.org/api/games/user/${username}?max=2&sort=dateAsc`;
 
                 if (syncedAt) {
-                    url += `&since=${syncedAt.getTime() + 1000}`;
+                    url += `&since=${syncedAt.getTime()}`;
                 }
 
                 const res = await fetch(url, {
@@ -111,7 +102,10 @@ export const chessRouter = router({
 
                 if (res.ok) {
                     const data = await res.text();
-                    const pgns = data.trim().split(/\n{2,}(?=\[Event )/g);
+                    const pgns = data
+                        .split(/\n{2,}(?=\[Event )/g)
+                        .map((s) => s.trim())
+                        .filter(Boolean);
 
                     if (pgns.length) {
                         for (const pgn of pgns) {
@@ -123,20 +117,25 @@ export const chessRouter = router({
                             games.push(parsedPgn);
                         }
 
+                        await db.main.game.createMany({
+                            data: games.map((game) => ({
+                                accountId: id,
+                                ...game,
+                            })),
+                        });
+
                         await db.main.chessAccount.update({
                             where: {
                                 id,
                             },
                             data: {
-                                syncedAt: games.at(-1)?.date,
+                                syncedAt: syncStart,
                             },
                         });
                     }
                 }
             }
         }
-
-        console.log(games);
     }),
     openings: publicProcedure.query(async () => {
         const openings = await db.chess.opening.findMany();

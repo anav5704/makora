@@ -6,9 +6,7 @@ import { Title } from "@/components/ui/title";
 import { api } from "@/lib/trpc";
 
 export default function DashboardPage() {
-    const { mutateAsync, isPending } = useMutation(
-        api.chess.sync.mutationOptions(),
-    );
+    const { mutateAsync, isPending } = useMutation(api.chess.sync.mutationOptions());
     const handleSync = async () => mutateAsync();
 
     return (

@@ -1,12 +1,6 @@
 "use client";
 
-import {
-    ChartArea,
-    LayoutDashboard,
-    LogOut,
-    Settings,
-    Swords,
-} from "lucide-react";
+import { ChartArea, LayoutDashboard, LogOut, Settings, Swords } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { NavLink } from "@/components/ui/navLink";
 

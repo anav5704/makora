@@ -8,12 +8,7 @@ interface NavLinkProps {
     isActive: boolean;
 }
 
-export const NavLink = ({
-    label,
-    href,
-    icon: Icon,
-    isActive,
-}: NavLinkProps) => {
+export const NavLink = ({ label, href, icon: Icon, isActive }: NavLinkProps) => {
     return (
         <Link
             href={{ pathname: href }}
