@@ -1,14 +1,14 @@
 // TODO: implement database transactions
 import { db, Platform } from "@makora/db";
 import { type ParsedPgn, parsePgn } from "../../lib/chess";
-import { publicProcedure, router } from "../index";
+import { protectedProcedure, publicProcedure, router } from "../index";
 
 export const chessRouter = router({
-    sync: publicProcedure.mutation(async ({ ctx }) => {
+    sync: protectedProcedure.mutation(async ({ ctx }) => {
         const syncStart = new Date();
         const accounts = await db.main.chessAccount.findMany({
             where: {
-                userId: ctx.session?.user.id,
+                userId: ctx.session.user.id,
             },
             select: {
                 id: true,
@@ -136,6 +136,20 @@ export const chessRouter = router({
                 }
             }
         }
+    }),
+    games: protectedProcedure.query(async ({ ctx }) => {
+        const games = await db.main.game.findMany({
+            where: {
+                account: {
+                    userId: ctx.session.user.id,
+                },
+            },
+            orderBy: {
+                date: "desc",
+            },
+        });
+
+        return games;
     }),
     openings: publicProcedure.query(async () => {
         const openings = await db.chess.opening.findMany();
