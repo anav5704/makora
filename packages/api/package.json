@@ -21,12 +21,13 @@
         "typescript": "^5"
     },
     "dependencies": {
+        "@makora/auth": "workspace:*",
+        "@makora/db": "workspace:*",
         "@trpc/client": "catalog:trpc",
         "@trpc/server": "catalog:trpc",
-        "next": "catalog:next",
+        "chess.js": "catalog:chess",
         "dotenv": "catalog:dotenv",
-        "zod": "catalog:zod",
-        "@makora/auth": "workspace:*",
-        "@makora/db": "workspace:*"
+        "next": "catalog:next",
+        "zod": "catalog:zod"
     }
 }

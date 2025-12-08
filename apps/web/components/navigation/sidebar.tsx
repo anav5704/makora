@@ -1,12 +1,6 @@
 "use client";
 
-import {
-    ChartArea,
-    LayoutDashboard,
-    LogOut,
-    Settings,
-    Swords,
-} from "lucide-react";
+import { ChartArea, LayoutDashboard, LogOut, Settings, Swords } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { NavLink } from "@/components/ui/navLink";
 
@@ -52,14 +46,14 @@ export const Sidebar = () => {
 
     return (
         <nav className="p-5 w-64 flex flex-col justify-between">
-            <ul>
+            <ul className="space-y-1.5">
                 {links.top.map((link) => (
                     <li key={link.href}>
                         <NavLink {...link} />
                     </li>
                 ))}
             </ul>
-            <ul>
+            <ul className="space-y-1.5">
                 {links.bottom.map((link) => (
                     <li key={link.href}>
                         <NavLink {...link} />

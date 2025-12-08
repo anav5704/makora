@@ -42,9 +42,7 @@ export const SigninForm = () => {
         <div className="max-w-sm mx-auto">
             <Header text="Welcome Back" />
 
-            <p className="text-center text-xl mb-5">
-                Sign in to your Makora Chess acocunt
-            </p>
+            <p className="text-center text-xl mb-5">Sign in to your Makora Chess acocunt</p>
 
             <Fieldset className="space-y-5">
                 <Input
@@ -63,11 +61,7 @@ export const SigninForm = () => {
                     onChange={(e) => setPassword(e.target.value)}
                 />
 
-                <Button
-                    label="Sign In"
-                    loading={loading}
-                    onClick={handleSignin}
-                />
+                <Button label="Sign In" loading={loading} onClick={handleSignin} />
             </Fieldset>
 
             <p className="text-center mt-5 text-zinc-400">

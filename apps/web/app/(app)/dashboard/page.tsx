@@ -1,5 +1,5 @@
 import { Title } from "@/components/ui/title";
 
-export default function DashboardPage() {
+export default function GamesPage() {
     return <Title title="Dashboard" />;
 }

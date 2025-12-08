@@ -36,9 +36,7 @@ export const OnboardingForm = () => {
         <div className="max-w-sm mx-auto">
             <Header text="Onboarding" />
 
-            <p className="text-center text-lg mb-5">
-                Link your chess account to get started
-            </p>
+            <p className="text-center text-lg mb-5">Link your chess account to get started</p>
 
             <Fieldset className="space-y-5">
                 <Account
@@ -48,16 +46,10 @@ export const OnboardingForm = () => {
                     setUsername={setUsername}
                 />
 
-                <Button
-                    label="Sign In"
-                    loading={isPending}
-                    onClick={handleOnboard}
-                />
+                <Button label="Sign In" loading={isPending} onClick={handleOnboard} />
             </Fieldset>
 
-            <p className="text-center mt-5 text-zinc-400">
-                You can add more accounts later
-            </p>
+            <p className="text-center mt-5 text-zinc-400">You can add more accounts later</p>
         </div>
     );
 };

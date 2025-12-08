@@ -12,16 +12,20 @@ export const userRouter = router({
         )
         .mutation(async ({ input, ctx }) => {
             const userId = ctx.session.user.id;
+            const now = new Date();
+            // set syncedAt to start of previous month
+            const syncedAt = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1, 0, 0, 0, 0));
 
-            await db.chessAccount.create({
+            await db.main.chessAccount.create({
                 data: {
                     platform: input.platform,
                     username: input.username,
+                    syncedAt,
                     userId,
                 },
             });
 
-            await db.user.update({
+            await db.main.user.update({
                 data: {
                     boarded: true,
                 },

@@ -3,5 +3,5 @@ interface TitleProps {
 }
 
 export const Title = ({ title }: TitleProps) => {
-    return <h1 className="text-4xl font-bold tracking-tight mb-5">{title}</h1>;
+    return <h1 className="p-5 text-4xl font-bold tracking-tight">{title}</h1>;
 };

@@ -13,9 +13,10 @@
     },
     "scripts": {
         "build": "tsdown",
-        "db:push": "prisma db push",
-        "db:studio": "prisma studio",
-        "db:generate": "prisma generate"
+        "db:studio": "cd main && prisma studio",
+        "db:seed": "cd chess && prisma db seed",
+        "db:push": "cd main && prisma db push && cd ../chess && prisma db push",
+        "db:generate": "cd main && prisma generate && cd ../chess && prisma generate"
     },
     "devDependencies": {
         "prisma": "catalog:prisma",
@@ -25,8 +26,9 @@
         "typescript": "^5"
     },
     "dependencies": {
-        "@prisma/adapter-pg": "catalog:prisma",
+        "@prisma/adapter-pg": "^7.0.1",
         "@prisma/client": "catalog:prisma",
+        "chess.js": "catalog:chess",
         "dotenv": "catalog:dotenv",
         "pg": "^8.16.3"
     }

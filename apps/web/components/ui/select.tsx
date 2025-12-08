@@ -1,13 +1,6 @@
 "use client";
 
-import {
-    Field,
-    Label,
-    Listbox,
-    ListboxButton,
-    ListboxOption,
-    ListboxOptions,
-} from "@headlessui/react";
+import { Field, Label, Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/react";
 import { ChevronDown } from "lucide-react";
 import type { Platform } from "@/types/chess";
 
@@ -26,14 +19,7 @@ interface SelectProps {
     name?: string;
 }
 
-export const Select = ({
-    options,
-    selectedItem,
-    setSelectedItem,
-    label,
-    id,
-    name,
-}: SelectProps) => {
+export const Select = ({ options, selectedItem, setSelectedItem, label, id, name }: SelectProps) => {
     return (
         <Field>
             <Label>{label}</Label>

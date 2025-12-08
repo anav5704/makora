@@ -1,12 +1,22 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../prisma/generated/client";
+import { PrismaClient as ChessClient } from "../chess/generated/client";
+import { PrismaClient as MainClient } from "../main/generated/client";
 
-const adapter = new PrismaPg({
-    connectionString: process.env.DATABASE_URL,
+const main: MainClient = new MainClient({
+    adapter: new PrismaPg({
+        connectionString: process.env.MAKORA_DATABASE_URL,
+    }),
 });
 
-const db: PrismaClient = new PrismaClient({ adapter });
+const chess: ChessClient = new ChessClient({
+    adapter: new PrismaPg({
+        connectionString: process.env.CHESS_DATABASE_URL,
+    }),
+});
 
-export * from "../prisma/generated/client";
+export const db = {
+    main,
+    chess,
+};
 
-export { db };
+export * from "../main/generated/client";

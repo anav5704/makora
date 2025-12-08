@@ -1,0 +1,10 @@
+model Opening {
+    id   Int    @id @default(autoincrement()) @map("_id")
+    eco  String
+    name String
+    pgn  String
+    fen String
+
+    @@map("opening")
+    @@index([fen])
+}
