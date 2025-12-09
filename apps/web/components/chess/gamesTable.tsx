@@ -9,7 +9,7 @@ import { api } from "@/lib/trpc";
 import { getTimeControl } from "@/utils/getTimeControl";
 
 export const GamesTable = () => {
-    const { data: games } = useQuery(api.chess.games.queryOptions());
+    const { data: games } = useQuery(api.chess.getGames.queryOptions());
     const relativeDate = (date: Date) => formatDistanceToNow(new Date(date), { addSuffix: true }).replace("about", "");
     const normalize = (str: string) =>
         str

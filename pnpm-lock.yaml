@@ -60,9 +60,15 @@ importers:
 
   apps/web:
     dependencies:
+      '@chrisoakman/chessboard2':
+        specifier: ^0.5.0
+        version: 0.5.0
       '@headlessui/react':
         specifier: ^2.2.9
         version: 2.2.9(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@lichess-org/chessground':
+        specifier: ^9.9.0
+        version: 9.9.0
       '@makora/api':
         specifier: workspace:*
         version: link:../../packages/api
@@ -326,6 +332,9 @@ packages:
   '@chevrotain/utils@10.5.0':
     resolution: {integrity: sha512-hBzuU5+JjB2cqNZyszkDHZgOSrUUT8V3dhgRl8Q9Gp6dAj/H5+KILGjbhDpc3Iy9qmqlm/akuOI2ut9VUtzJxQ==}
 
+  '@chrisoakman/chessboard2@0.5.0':
+    resolution: {integrity: sha512-lWw6weUPVNiu+z8ZIGDgxsu1BB78pjTqboLSuAE52eCXH1IKU+uIwSYMetFWI8VFOYcOKX85VzVxCTjPGKrO9A==}
+
   '@electric-sql/pglite-socket@0.0.6':
     resolution: {integrity: sha512-6RjmgzphIHIBA4NrMGJsjNWK4pu+bCWJlEWlwcxFTVY3WT86dFpKwbZaGWZV6C5Rd7sCk1Z0CI76QEfukLAUXw==}
     hasBin: true
@@ -530,6 +539,9 @@ packages:
 
   '@levischuck/tiny-cbor@0.2.11':
     resolution: {integrity: sha512-llBRm4dT4Z89aRsm6u2oEZ8tfwL/2l6BwpZ7JcyieouniDECM5AqNgr/y08zalEIvW3RSK4upYyybDcmjXqAow==}
+
+  '@lichess-org/chessground@9.9.0':
+    resolution: {integrity: sha512-0BAyVXgRLaYTC8lj69Wr5EZoQzHRRwY1oGsggCbNXnkdcoQPP6lQgW0bHgbTScADGiNZvRs8VcV5JEZTTMEPfg==}
 
   '@mrleebo/prisma-ast@0.12.1':
     resolution: {integrity: sha512-JwqeCQ1U3fvccttHZq7Tk0m/TMC6WcFAQZdukypW3AzlJYKYTGNVd1ANU2GuhKnv4UQuOFj3oAl0LLG/gxFN1w==}
@@ -1930,6 +1942,8 @@ snapshots:
 
   '@chevrotain/utils@10.5.0': {}
 
+  '@chrisoakman/chessboard2@0.5.0': {}
+
   '@electric-sql/pglite-socket@0.0.6(@electric-sql/pglite@0.3.2)':
     dependencies:
       '@electric-sql/pglite': 0.3.2
@@ -2106,6 +2120,8 @@ snapshots:
       '@jridgewell/sourcemap-codec': 1.5.5
 
   '@levischuck/tiny-cbor@0.2.11': {}
+
+  '@lichess-org/chessground@9.9.0': {}
 
   '@mrleebo/prisma-ast@0.12.1':
     dependencies:
