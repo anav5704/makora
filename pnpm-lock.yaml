@@ -60,9 +60,6 @@ importers:
 
   apps/web:
     dependencies:
-      '@chrisoakman/chessboard2':
-        specifier: ^0.5.0
-        version: 0.5.0
       '@headlessui/react':
         specifier: ^2.2.9
         version: 2.2.9(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -331,9 +328,6 @@ packages:
 
   '@chevrotain/utils@10.5.0':
     resolution: {integrity: sha512-hBzuU5+JjB2cqNZyszkDHZgOSrUUT8V3dhgRl8Q9Gp6dAj/H5+KILGjbhDpc3Iy9qmqlm/akuOI2ut9VUtzJxQ==}
-
-  '@chrisoakman/chessboard2@0.5.0':
-    resolution: {integrity: sha512-lWw6weUPVNiu+z8ZIGDgxsu1BB78pjTqboLSuAE52eCXH1IKU+uIwSYMetFWI8VFOYcOKX85VzVxCTjPGKrO9A==}
 
   '@electric-sql/pglite-socket@0.0.6':
     resolution: {integrity: sha512-6RjmgzphIHIBA4NrMGJsjNWK4pu+bCWJlEWlwcxFTVY3WT86dFpKwbZaGWZV6C5Rd7sCk1Z0CI76QEfukLAUXw==}
@@ -1941,8 +1935,6 @@ snapshots:
   '@chevrotain/types@10.5.0': {}
 
   '@chevrotain/utils@10.5.0': {}
-
-  '@chrisoakman/chessboard2@0.5.0': {}
 
   '@electric-sql/pglite-socket@0.0.6(@electric-sql/pglite@0.3.2)':
     dependencies:
