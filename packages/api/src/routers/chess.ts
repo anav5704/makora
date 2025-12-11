@@ -3,6 +3,7 @@ import { db, Platform } from "@makora/db";
 import { type ParsedPgn, parsePgn } from "../../lib/chess";
 import { protectedProcedure, publicProcedure, router } from "../index";
 import { z }  from "zod"
+import { Chess } from "chess.js";
 
 export const chessRouter = router({
     syncGames: protectedProcedure.mutation(async ({ ctx }) => {
@@ -147,7 +148,17 @@ export const chessRouter = router({
             }
           })
 
-          return game
+          if(!game) return
+
+          const chess = new Chess()
+          const positions: string[] = [chess.fen()]
+
+          for(const move of game.moves) {
+            chess.move(move)
+            positions.push(chess.fen())
+          }
+
+          return { game, positions }
     }),
     getGames: protectedProcedure.query(async ({ ctx }) => {
         const games = await db.main.game.findMany({

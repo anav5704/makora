@@ -10,7 +10,7 @@ import { useEffect, useRef, useState } from "react";
 interface Move {
     from: string,
     to: string,
-    metadata?: any,
+    metadata?: Record<string, string>,
     promotion?: string | null,
     fen?: string
 }
@@ -18,14 +18,12 @@ interface Move {
 interface BoardProps {
   fen: string,
   orientation: Color,
-  onMove: (move: Move) => void,
   onChangeFen: (fen: string) => void,
-  boardImage?: string,
   onApiReady?: (api: Api) => void,
   config?: Partial<Config>
 }
 
-export const Board = ({ fen, orientation, onMove, onChangeFen, boardImage, onApiReady, config }: BoardProps) => {
+export const Core = ({ fen, orientation, onChangeFen, onApiReady, config }: BoardProps) => {
   const ref = useRef<HTMLDivElement | null>(null);
   const [api, setApi] = useState<Api | null>(null);
 
@@ -76,9 +74,7 @@ export const Board = ({ fen, orientation, onMove, onChangeFen, boardImage, onApi
           } catch(error) {
           }
       }
-  }, [ref, fen, orientation, onMove, onChangeFen, onApiReady, config])
-
- const cssVars = boardImage ? { ["--board-image" as any]: `url('/boards/${boardImage}')` } : undefined;
+  }, [])
 
   useEffect(() => {
     if (api && typeof fen === "string") {
@@ -91,6 +87,5 @@ export const Board = ({ fen, orientation, onMove, onChangeFen, boardImage, onApi
     style={{
       aspectRatio: 1,
       height: 600,
-      ...cssVars
     }} />
 }

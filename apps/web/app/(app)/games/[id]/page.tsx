@@ -1,24 +1,18 @@
 "use client"
 
-import { Board } from "@/components/chess/board";
-import { History } from "@/components/chess/history";
+import { FullBoard } from "@/components/chess/board/fullBoard";
+import { History } from "@/components/chess/board/history";
 import { Title } from "@/components/ui/title";
 import { api } from "@/lib/trpc";
 import { Color } from "@lichess-org/chessground/types";
 import { useQuery } from "@tanstack/react-query";
-import { use, useState } from "react";
+import { use } from "react";
 
 export default function GamePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const { data: game } = useQuery(api.chess.getGame.queryOptions({
+  const {  data: { game, positions } = {}} = useQuery(api.chess.getGame.queryOptions({
      id
   }))
-
-  const [fen, setFen] = useState("pppppppp/pppppppp/8/8/8/8/RBRBRBRB/QQQQQQQQ w KQkq - 0 1")
-
-  const handleMove = () => {
-      // compute new fen and setFen("")
-  }
 
     return (
       <main className="flex">
@@ -26,12 +20,9 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         <Title title="Analysis" />
       </header>
       <section className="grow">
-        <Board
-          fen={fen}
+        <FullBoard
+          positions={positions || []}
           orientation={game?.color.toLowerCase() as Color}
-          onMove={handleMove}
-          boardImage="board.png"
-          onChangeFen={(newFen) => setFen(newFen)}
         />
       </section>
       <History moves={game?.moves || []} />
