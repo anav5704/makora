@@ -7,18 +7,12 @@ import type { Config } from "@lichess-org/chessground/config";
 import type { Color } from "@lichess-org/chessground/types";
 import { useEffect, useRef, useState } from "react";
 
-interface Move {
-    from: string,
-    to: string,
-    metadata?: Record<string, string>,
-    promotion?: string | null,
-    fen?: string
-}
+// Move interface removed (unused)
 
 interface BoardProps {
   fen: string,
   orientation: Color,
-  onChangeFen: (fen: string) => void,
+  onChangeFen?: (fen: string) => void,
   onApiReady?: (api: Api) => void,
   config?: Partial<Config>
 }
@@ -71,10 +65,10 @@ export const Core = ({ fen, orientation, onChangeFen, onApiReady, config }: Boar
       return () => {
           try {
             chessgroundApi.destroy()
-          } catch(error) {
+          } catch {
           }
       }
-  }, [])
+  }, [api, config, fen, orientation, onChangeFen, onApiReady])
 
   useEffect(() => {
     if (api && typeof fen === "string") {

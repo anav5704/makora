@@ -45,7 +45,7 @@ export const Sidebar = () => {
     };
 
     return (
-        <nav className="p-5 w-64 flex flex-col justify-between">
+        <nav className="p-5 w-72 flex flex-col justify-between">
             <ul className="space-y-1.5">
                 {links.top.map((link) => (
                     <li key={link.href}>
