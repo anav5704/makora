@@ -1,6 +1,6 @@
 "use client";
 
-import { ChartArea, LayoutDashboard, LogOut, Settings, Swords } from "lucide-react";
+import { ChartArea, Heart, LayoutDashboard, LogOut, Settings, Swords } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { NavLink } from "@/components/ui/navLink";
 
@@ -30,6 +30,12 @@ export const Sidebar = () => {
         ],
         bottom: [
             {
+              label: "Donate",
+              href: "https://anav.dev",
+              icon : Heart,
+              isActive: false
+            },
+            {
                 label: "Settings",
                 href: "/settings",
                 icon: Settings,
@@ -45,15 +51,15 @@ export const Sidebar = () => {
     };
 
     return (
-        <nav className="p-5 w-64 flex flex-col justify-between">
-            <ul className="space-y-1.5">
+        <nav className="p-5 w-72 flex flex-col justify-between">
+            <ul className="space-y-2">
                 {links.top.map((link) => (
                     <li key={link.href}>
                         <NavLink {...link} />
                     </li>
                 ))}
             </ul>
-            <ul className="space-y-1.5">
+            <ul className="space-y-2">
                 {links.bottom.map((link) => (
                     <li key={link.href}>
                         <NavLink {...link} />

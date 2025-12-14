@@ -7,15 +7,13 @@ import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { api } from "@/lib/trpc";
 import { getTimeControl } from "@/utils/getTimeControl";
+import { normalizeEnum } from "@/utils/normalizeEnum";
 
 export const GamesTable = () => {
-    const { data: games } = useQuery(api.chess.games.queryOptions());
+    const { data: games } = useQuery(api.chess.getGames.queryOptions());
     const relativeDate = (date: Date) => formatDistanceToNow(new Date(date), { addSuffix: true }).replace("about", "");
-    const normalize = (str: string) =>
-        str
-            .split("_")
-            .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-            .join(" ");
+    // Normalization moved to utils/normalizeEnum.ts
+    // use normalizeEnum(...) below
 
     return (
         <section>
@@ -32,8 +30,8 @@ export const GamesTable = () => {
                                     <span className="truncate">{opening}</span>
                                 </span>
                             </span>
-                            <span className="col-span-1">{normalize(gamePhase)}</span>
-                            <span className="col-span-1">{normalize(termination)}</span>
+                            <span className="col-span-1">{normalizeEnum(gamePhase)}</span>
+                            <span className="col-span-1">{normalizeEnum(termination)}</span>
                             <span className="col-span-1">{moveCount}</span>
                             <span className="col-span-1">{relativeDate(new Date(date))}</span>
                         </p>

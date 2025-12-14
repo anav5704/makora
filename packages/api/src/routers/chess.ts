@@ -2,9 +2,11 @@
 import { db, Platform } from "@makora/db";
 import { type ParsedPgn, parsePgn } from "../../lib/chess";
 import { protectedProcedure, publicProcedure, router } from "../index";
+import { z }  from "zod"
+import { Chess } from "chess.js";
 
 export const chessRouter = router({
-    sync: protectedProcedure.mutation(async ({ ctx }) => {
+    syncGames: protectedProcedure.mutation(async ({ ctx }) => {
         const syncStart = new Date();
         const accounts = await db.main.chessAccount.findMany({
             where: {
@@ -82,13 +84,11 @@ export const chessRouter = router({
                         syncedAt: syncStart,
                     },
                 });
-
-                console.log(games);
             }
 
             if (platform === Platform.LICHESS_ORG) {
                 const games: ParsedPgn[] = [];
-                let url = `https://lichess.org/api/games/user/${username}?max=2&sort=dateAsc`;
+                let url = `https://lichess.org/api/games/user/${username}?sort=dateAsc`;
 
                 if (syncedAt) {
                     url += `&since=${syncedAt.getTime()}`;
@@ -137,7 +137,30 @@ export const chessRouter = router({
             }
         }
     }),
-    games: protectedProcedure.query(async ({ ctx }) => {
+    getGame: protectedProcedure
+      .input(z.object({
+          id: z.string()
+      }))
+      .query(async ({ input }) => {
+          const game = await db.main.game.findUnique({
+            where: {
+              id: input.id
+            }
+          })
+
+          if(!game) return
+
+          const chess = new Chess()
+          const positions: string[] = [chess.fen()]
+
+          for(const move of game.moves) {
+            chess.move(move)
+            positions.push(chess.fen())
+          }
+
+          return { game, positions }
+    }),
+    getGames: protectedProcedure.query(async ({ ctx }) => {
         const games = await db.main.game.findMany({
             where: {
                 account: {
@@ -151,7 +174,7 @@ export const chessRouter = router({
 
         return games;
     }),
-    openings: publicProcedure.query(async () => {
+    getOpenings: publicProcedure.query(async () => {
         const openings = await db.chess.opening.findMany();
 
         return openings;

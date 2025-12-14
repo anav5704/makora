@@ -23,11 +23,26 @@ body {
     color: var(--foreground);
     font-family: var(--font-inter-tight), Arial, Helvetica, sans-serif;
 
-    @apply text-base underline-offset-3
+    @apply text-base underline-offset-3;
 }
 
 h1,
 h2,
 h3 {
     font-family: var(--font-inter-tight), serif;
+}
+
+/* Hide scrollbars globally (major browsers) */
+
+/* Firefox */
+* {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE 10+ and Edge */
+}
+
+/* WebKit-based browsers (Chrome, Safari, Opera) */
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
