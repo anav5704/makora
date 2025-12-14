@@ -80,6 +80,6 @@ export const Core = ({ fen, orientation, onChangeFen, onApiReady, config }: Boar
     ref={ref}
     style={{
       aspectRatio: 1,
-      height: 600,
+      height: 700,
     }} />
 }

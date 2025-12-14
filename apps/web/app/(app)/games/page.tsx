@@ -3,7 +3,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { GamesTable } from "@/components/chess/gamesTable";
 import { Button } from "@/components/ui/button";
-import { Title } from "@/components/ui/title";
 import { api } from "@/lib/trpc";
 
 export default function DashboardPage() {
@@ -14,8 +13,6 @@ export default function DashboardPage() {
     return (
         <main>
             <header className="sticky top-0 bg-zinc-900 border-b border-zinc-800">
-                <Title title="Games" />
-
                 <section className="p-5 border-b border-zinc-800">
                     <Button label="Sync" onClick={handleSync} loading={isMutating} />
                 </section>
