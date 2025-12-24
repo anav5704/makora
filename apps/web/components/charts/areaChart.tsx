@@ -52,13 +52,13 @@ export function AreaChart({ title, data, xKey, yKey, unit }: AreaChartProps) {
 
   return (
     <div className="p-5">
-      <div className="flex justify-between items-center mb-5">
+      <div className="flex justify-between items-center mb-3">
         <p>{title}</p>
         {activeData && (
             <span>{activeData.y}{unit} @ {activeData.x}</span>
         )}
       </div>
-      <ResponsiveContainer width="100%" height={250}>
+      <ResponsiveContainer width="100%" height={350}>
         <AreaChartCore
           accessibilityLayer
           data={data}
@@ -79,7 +79,7 @@ export function AreaChart({ title, data, xKey, yKey, unit }: AreaChartProps) {
             dataKey={yKey}
             type="natural"
             fill="#27272a"
-            fillOpacity={0.4}
+            fillOpacity={0.5}
             stroke="white"
           />
         </AreaChartCore>

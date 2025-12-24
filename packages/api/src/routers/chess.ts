@@ -4,6 +4,7 @@ import { type ParsedPgn, parsePgn } from "../../lib/chess";
 import { protectedProcedure, publicProcedure, router } from "../index";
 import { z }  from "zod"
 import { Chess } from "chess.js";
+import { pl } from "zod/locales";
 
 export const chessRouter = router({
     syncGames: protectedProcedure.mutation(async ({ ctx }) => {

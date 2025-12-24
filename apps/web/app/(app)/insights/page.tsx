@@ -1,6 +1,7 @@
 "use client"
 
 import { AreaChart } from "@/components/charts/areaChart";
+import { BarList } from "@/components/charts/barList";
 import { Metrics } from "@/components/insights/metrics";
 import { Loader } from "@/components/loader";
 import { api } from "@/lib/trpc";
@@ -9,8 +10,9 @@ import { useQuery } from "@tanstack/react-query";
 export default function InsightsPage() {
   const { data: metrics, isLoading: metricsLoading } = useQuery(api.insights.getMetrics.queryOptions())
   const { data: overTimeData, isLoading: overTimeLoading } = useQuery(api.insights.getOverTime.queryOptions())
+  const { data: comparisonData, isLoading: comparisonLoading } = useQuery(api.insights.getComparison.queryOptions())
 
-  const isLoading = metricsLoading || overTimeLoading
+  const isLoading = metricsLoading || overTimeLoading || comparisonLoading
 
     return (
       <main className="h-full divide-y divide-zinc-800">
@@ -28,7 +30,7 @@ export default function InsightsPage() {
 
           <AreaChart
             title="Games Lost"
-            data={overTimeData || []}
+            data={overTimeData ?? []}
             xKey="date"
             yKey="losses"
             unit=" Losses"
@@ -36,13 +38,16 @@ export default function InsightsPage() {
 
           <AreaChart
             title="Average Accuracy"
-            data={overTimeData || []}
+            data={overTimeData ?? []}
             xKey="date"
             yKey="accuracy"
             unit="%"
           />
 
-          <div />
+          <BarList
+            title="Top Openings"
+            data={comparisonData ?? []}
+          />
           </>
         )}
 
