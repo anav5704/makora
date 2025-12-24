@@ -56,12 +56,15 @@ export const insightsRouter = router({
           weekStart.setDate(date.getDate() - date.getDay())
           weekStart.setHours(0, 0, 0, 0)
 
-          const weekKey = weekStart.toISOString().split('T')[0]
+          const weekKey = weekStart.toISOString().split('T')[0] as string
 
           if (!gamesByWeek.has(weekKey)) {
             gamesByWeek.set(weekKey, [])
           }
-          gamesByWeek.get(weekKey)!.push(game)
+          const weekGames = gamesByWeek.get(weekKey)
+          if (weekGames) {
+            weekGames.push(game)
+          }
         })
 
         // Calculate cumulative losses and average accuracy per week
@@ -85,5 +88,36 @@ export const insightsRouter = router({
           })
 
         return data
+    }),
+    getComparison: protectedProcedure.query(async ({ ctx }) => {
+        const games = await db.main.game.findMany({
+          where: {
+            account: {
+              userId: ctx.session.user.id
+            }
+          },
+          select: {
+            opening: true
+          }
+        })
+
+        // Aggregate losses by opening
+        const openingCounts = new Map<string, number>()
+
+        games.forEach((game) => {
+          const opening = game.opening
+          openingCounts.set(opening, (openingCounts.get(opening) || 0) + 1)
+        })
+
+        // Sort by count and get top 5
+        const topOpenings = Array.from(openingCounts.entries())
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(([name, value]) => ({
+            name,
+            value
+          }))
+
+        return topOpenings
     })
 });
