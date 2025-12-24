@@ -34,14 +34,13 @@ export function BarList({ title, data }: BarListProps) {
           <Bar
             dataKey="value"
             fill="#27272a"
-            fillOpacity={0.5}
             radius={5}
           >
             <LabelList
               dataKey="name"
               position="insideLeft"
               offset={15}
-              className="fill-white"
+              className="fill-white truncate"
             />
             <LabelList
               dataKey="value"

@@ -79,8 +79,7 @@ export function AreaChart({ title, data, xKey, yKey, unit }: AreaChartProps) {
             dataKey={yKey}
             type="natural"
             fill="#27272a"
-            fillOpacity={0.5}
-            stroke="white"
+            stroke="#a1a1aa"
           />
         </AreaChartCore>
       </ResponsiveContainer>
