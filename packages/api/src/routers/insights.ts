@@ -119,5 +119,58 @@ export const insightsRouter = router({
           }))
 
         return topOpenings
+    }),
+    getDistribution: protectedProcedure.query(async ({ ctx }) => {
+        const games = await db.main.game.findMany({
+          where: {
+            account: {
+              userId: ctx.session.user.id
+            }
+          },
+          select: {
+            timeControl: true,
+            gamePhase: true,
+            termination: true,
+            date: true,
+            color: true,
+            account: {
+              select: {
+                platform: true
+              }
+            }
+          }
+        })
+
+        // Helper function to aggregate counts
+        const aggregate = (items: string[]) => {
+          const counts = new Map<string, number>()
+          items.forEach((item) => {
+            counts.set(item, (counts.get(item) || 0) + 1)
+          })
+          return Array.from(counts.entries()).map(([name, value]) => ({
+            name,
+            value
+          }))
+        }
+
+        // Day of week names
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as const
+
+        // Aggregate each distribution
+        const timeControl = aggregate(games.map(g => g.timeControl))
+        const gamePhase = aggregate(games.map(g => g.gamePhase))
+        const termination = aggregate(games.map(g => g.termination))
+        const dayOfWeek = aggregate(games.map(g => dayNames[new Date(g.date).getDay()] as string))
+        const color = aggregate(games.map(g => g.color))
+        const platform = aggregate(games.map(g => g.account.platform))
+
+        return {
+          timeControl,
+          gamePhase,
+          termination,
+          dayOfWeek,
+          color,
+          platform
+        }
     })
 });
