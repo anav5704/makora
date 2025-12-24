@@ -69,12 +69,19 @@ export const chessRouter = router({
                     }
                 }
 
-                await db.main.game.createMany({
-                    data: games.map((game) => ({
-                        accountId: id,
-                        ...game,
-                    })),
-                });
+                for (const game of games) {
+                    await db.main.game.create({
+                        data: {
+                            accountId: id,
+                            ...game,
+                            evaluation: {
+                                create: {
+                                    accuracy: Math.random() * 100,
+                                },
+                            },
+                        },
+                    });
+                }
 
                 await db.main.chessAccount.update({
                     where: {
@@ -117,12 +124,19 @@ export const chessRouter = router({
                             games.push(parsedPgn);
                         }
 
-                        await db.main.game.createMany({
-                            data: games.map((game) => ({
-                                accountId: id,
-                                ...game,
-                            })),
-                        });
+                        for (const game of games) {
+                            await db.main.game.create({
+                                data: {
+                                    accountId: id,
+                                    ...game,
+                                    evaluation: {
+                                        create: {
+                                            accuracy: Math.random() * 100,
+                                        },
+                                    },
+                                },
+                            });
+                        }
 
                         await db.main.chessAccount.update({
                             where: {

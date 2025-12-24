@@ -2,18 +2,18 @@
 // TODO: add loading state
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
-import { api } from "@/lib/trpc";
 import { getTimeControl } from "@/utils/getTimeControl";
 import { normalizeEnum } from "@/utils/normalizeEnum";
+import { Game } from "@makora/db";
 
-export const GamesTable = () => {
-    const { data: games } = useQuery(api.chess.getGames.queryOptions());
+interface GamesTableProps {
+  games: Game[]
+}
+
+export const GamesTable = ({ games }: GamesTableProps) => {
     const relativeDate = (date: Date) => formatDistanceToNow(new Date(date), { addSuffix: true }).replace("about", "");
-    // Normalization moved to utils/normalizeEnum.ts
-    // use normalizeEnum(...) below
 
     return (
         <section>

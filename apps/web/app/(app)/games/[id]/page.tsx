@@ -7,7 +7,7 @@ import type { Color } from "@lichess-org/chessground/types";
 import { useQuery } from "@tanstack/react-query";
 import { use, useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { Loader, LoaderCircle } from "lucide-react";
+import { Loader } from "@/components/loader";
 
 export default function GamePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -56,9 +56,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     return (
       <main className="flex h-full">
         {isLoading ? (
-          <div className="grid place-content-center h-full w-full">
-            <LoaderCircle size={24} className="animate-spin" />
-          </div>
+        <Loader />
         ) : (
           <>
         <FullBoard
