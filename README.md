@@ -1,5 +1,4 @@
 <br />
-<br />
 
 <div align="center">
     <h3>
@@ -10,7 +9,6 @@
     <a href="./CONTRIBUTING.md">Contribute</a> 
 </div>
 
-<br />
 <br />
 
 ### Track
