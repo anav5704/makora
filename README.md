@@ -1,9 +1,4 @@
 <br />
-
-<div align="center">
-    <h1>Makora Chess</h1>
-</div>
-
 <br />
 
 <div align="center">
@@ -18,21 +13,21 @@
 <br />
 <br />
 
-## Track
+### Track
 
 ![Track](./.github/docs/images/track.png)
 
 - Sync games directly from your [chess.com](http://chess.com) and [lichess.org](http://lichess.org) accounts
 - Organize lost games using searches, sorts and filters
 
-## Analyze
+### Analyze
 
 ![Analyze](./.github/docs/images/analyze.png)
 
 - Play through each game and manually review your moves
 - Get computer analysis for mistakes, inaccuracies and blunders
 
-## Visualize
+### Visualize
 
 ![Visualize](./.github/docs/images/visualize.png)
 
