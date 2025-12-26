@@ -1,4 +1,4 @@
-<br />
+![Banner](./.github/docs/images/banner.png)
 
 <div align="center">
     <h3>
