@@ -1,15 +1,16 @@
-// TODO: add platform column
-// TODO: add loading state
 "use client";
 
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { getTimeControl } from "@/utils/getTimeControl";
 import { normalizeEnum } from "@/utils/normalizeEnum";
-import { Game } from "@makora/db";
+import type { Game, Platform } from "@makora/db";
+import { LichessOrg } from "./icons/lichess-org";
+import { ChessCom } from "./icons/chess-com";
+
 
 interface GamesTableProps {
-  games: Game[]
+  games: (Game & { account: { platform: Platform } })[]
 }
 
 export const GamesTable = ({ games }: GamesTableProps) => {
@@ -17,16 +18,23 @@ export const GamesTable = ({ games }: GamesTableProps) => {
 
     return (
         <section>
-            {games?.map(({ id, timeControl, opening, gamePhase, termination, moveCount, date }) => {
+            {games?.map(({ id, reviewed, timeControl, opening, account: { platform }, gamePhase, termination, moveCount, date }) => {
                 // @ts-expect-error
                 const { icon: Icon, title } = getTimeControl(timeControl);
 
                 return (
-                    <Link key={id} href={{ pathname: `/games/${id}` }}>
-                        <p className="grid grid-cols-8 p-5 border-b border-zinc-800">
+                    <Link key={id} href={{ pathname: `/games/${id}` }} >
+                      <p className={`${reviewed ? "text-zinc-400" : "text-white"} grid grid-cols-8 p-5 border-b border-zinc-800 hover:bg-zinc-800 transition`}>
                             <span className="col-span-4">
-                                <span title={title} className="flex items-center gap-5">
-                                    <Icon size={24} />
+                                <span  className="flex items-center gap-5">
+                                  {platform === "CHESS_COM" ? (
+                                    <ChessCom />
+                                  ) : (
+                                    <LichessOrg />
+                                  )}
+                                  <span title={title}>
+                                    <Icon size={24}  />
+                                  </span>
                                     <span className="truncate">{opening}</span>
                                 </span>
                             </span>

@@ -12,12 +12,13 @@ export default function DashboardPage() {
         queryClient.invalidateQueries({ queryKey: api.chess.getGames.queryKey()})
       }
     }));
+
     const { data: games, isLoading } = useQuery(api.chess.getGames.queryOptions());
 
     const handleSync = async () => mutateAsync();
 
     return (
-        <main className="h-full">
+        <main>
           {isLoading ? (
             <Loader />
           ) : (
