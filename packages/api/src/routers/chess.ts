@@ -181,6 +181,13 @@ export const chessRouter = router({
                     userId: ctx.session.user.id,
                 },
             },
+            include: {
+              account: {
+                select: {
+                  platform: true
+                }
+              }
+            },
             orderBy: {
                 date: "desc",
             },
