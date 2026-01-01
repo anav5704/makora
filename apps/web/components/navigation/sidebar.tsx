@@ -30,10 +30,10 @@ export const Sidebar = () => {
         ],
         bottom: [
             {
-              label: "Donate",
-              href: "https://anav.dev",
-              icon : Heart,
-              isActive: false
+                label: "Donate",
+                href: "https://anav.dev",
+                icon: Heart,
+                isActive: false,
             },
             {
                 label: "Settings",

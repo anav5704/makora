@@ -1,9 +1,9 @@
 // TODO: implement database transactions
 import { db, Platform } from "@makora/db";
+import { Chess } from "chess.js";
+import { z } from "zod";
 import { type ParsedPgn, parsePgn } from "../../lib/chess";
 import { protectedProcedure, publicProcedure, router } from "../index";
-import { z }  from "zod"
-import { Chess } from "chess.js";
 
 export const chessRouter = router({
     syncGames: protectedProcedure.mutation(async ({ ctx }) => {
@@ -152,28 +152,30 @@ export const chessRouter = router({
         }
     }),
     getGame: protectedProcedure
-      .input(z.object({
-          id: z.string()
-      }))
-      .query(async ({ input }) => {
-          const game = await db.main.game.findUnique({
-            where: {
-              id: input.id
+        .input(
+            z.object({
+                id: z.string(),
+            }),
+        )
+        .query(async ({ input }) => {
+            const game = await db.main.game.findUnique({
+                where: {
+                    id: input.id,
+                },
+            });
+
+            if (!game) return;
+
+            const chess = new Chess();
+            const positions: string[] = [chess.fen()];
+
+            for (const move of game.moves) {
+                chess.move(move);
+                positions.push(chess.fen());
             }
-          })
 
-          if(!game) return
-
-          const chess = new Chess()
-          const positions: string[] = [chess.fen()]
-
-          for(const move of game.moves) {
-            chess.move(move)
-            positions.push(chess.fen())
-          }
-
-          return { game, positions }
-    }),
+            return { game, positions };
+        }),
     getGames: protectedProcedure.query(async ({ ctx }) => {
         const games = await db.main.game.findMany({
             where: {
@@ -182,11 +184,11 @@ export const chessRouter = router({
                 },
             },
             include: {
-              account: {
-                select: {
-                  platform: true
-                }
-              }
+                account: {
+                    select: {
+                        platform: true,
+                    },
+                },
             },
             orderBy: {
                 date: "desc",

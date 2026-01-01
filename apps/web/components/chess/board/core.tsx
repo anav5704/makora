@@ -1,6 +1,6 @@
-import "@lichess-org/chessground/assets/chessground.base.css"
-import "@lichess-org/chessground/assets/chessground.brown.css"
-import "@lichess-org/chessground/assets/chessground.cburnett.css"
+import "@lichess-org/chessground/assets/chessground.base.css";
+import "@lichess-org/chessground/assets/chessground.brown.css";
+import "@lichess-org/chessground/assets/chessground.cburnett.css";
 import { Chessground } from "@lichess-org/chessground";
 import type { Api } from "@lichess-org/chessground/api";
 import type { Config } from "@lichess-org/chessground/config";
@@ -10,76 +10,78 @@ import { useEffect, useRef, useState } from "react";
 // Move interface removed (unused)
 
 interface BoardProps {
-  fen: string,
-  orientation: Color,
-  onChangeFen?: (fen: string) => void,
-  onApiReady?: (api: Api) => void,
-  config?: Partial<Config>
+    fen: string;
+    orientation: Color;
+    onChangeFen?: (fen: string) => void;
+    onApiReady?: (api: Api) => void;
+    config?: Partial<Config>;
 }
 
 export const Core = ({ fen, orientation, onChangeFen, onApiReady, config }: BoardProps) => {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const [api, setApi] = useState<Api | null>(null);
+    const ref = useRef<HTMLDivElement | null>(null);
+    const [api, setApi] = useState<Api | null>(null);
 
-  useEffect(() => {
-      if(!ref.current) return
+    useEffect(() => {
+        if (!ref.current) return;
 
-      const buildConfig = (overwriteApi?: Api | null): Partial<Config> => ({
-           ...config,
-           fen,
-           orientation,
-           coordinates: false,
-           draggable: {
-             enabled: false,
-             ...(config?.draggable ?? {}),
-           },
-           selectable: {
-                 enabled: false,
-                 ...(config?.selectable ?? {}),
-               },
-               movable: {
-                 free: false,
-                 ...(config?.movable ?? {}),
-               },
-           events: {
-             change() {
-               const usedApi = overwriteApi ?? api;
-               const currentFen = usedApi ? usedApi.getFen() : undefined;
-               if (currentFen) onChangeFen?.(currentFen);
-             },
-             ...(config?.events ?? {}),
-           },
-           // @ts-expect-error
-           addDimensionsCssVarsTo: ref.current,
-         });
+        const buildConfig = (overwriteApi?: Api | null): Partial<Config> => ({
+            ...config,
+            fen,
+            orientation,
+            coordinates: false,
+            draggable: {
+                enabled: false,
+                ...(config?.draggable ?? {}),
+            },
+            selectable: {
+                enabled: false,
+                ...(config?.selectable ?? {}),
+            },
+            movable: {
+                free: false,
+                ...(config?.movable ?? {}),
+            },
+            events: {
+                change() {
+                    const usedApi = overwriteApi ?? api;
+                    const currentFen = usedApi ? usedApi.getFen() : undefined;
+                    if (currentFen) onChangeFen?.(currentFen);
+                },
+                ...(config?.events ?? {}),
+            },
+            // @ts-expect-error
+            addDimensionsCssVarsTo: ref.current,
+        });
 
-      if(api) {
-        api.set(buildConfig())
-        return
-      }
+        if (api) {
+            api.set(buildConfig());
+            return;
+        }
 
-      const chessgroundApi = Chessground(ref.current, buildConfig(null) as Config)
-      setApi(chessgroundApi)
-      onApiReady?.(chessgroundApi)
+        const chessgroundApi = Chessground(ref.current, buildConfig(null) as Config);
+        setApi(chessgroundApi);
+        onApiReady?.(chessgroundApi);
 
-      return () => {
-          try {
-            chessgroundApi.destroy()
-          } catch {
-          }
-      }
-  }, [api, config, fen, orientation, onChangeFen, onApiReady])
+        return () => {
+            try {
+                chessgroundApi.destroy();
+            } catch {}
+        };
+    }, [api, config, fen, orientation, onChangeFen, onApiReady]);
 
-  useEffect(() => {
-    if (api && typeof fen === "string") {
-        api.set({ fen })
-      }
-  }, [api, fen])
+    useEffect(() => {
+        if (api && typeof fen === "string") {
+            api.set({ fen });
+        }
+    }, [api, fen]);
 
-    return <div
-    ref={ref}
-    style={{
-      aspectRatio: 1,
-      height: 700,
-    }} />
-}
+    return (
+        <div
+            ref={ref}
+            style={{
+                aspectRatio: 1,
+                height: 700,
+            }}
+        />
+    );
+};
