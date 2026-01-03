@@ -176,27 +176,57 @@ export const chessRouter = router({
 
             return { game, positions };
         }),
-    getGames: protectedProcedure.query(async ({ ctx }) => {
-        const games = await db.main.game.findMany({
-            where: {
-                account: {
-                    userId: ctx.session.user.id,
-                },
-            },
-            include: {
-                account: {
-                    select: {
-                        platform: true,
+    getGames: protectedProcedure
+        .input(
+            z.object({
+                search: z.string().optional(),
+            }),
+        )
+        .query(async ({ ctx, input }) => {
+            const { search } = input;
+
+            const games = await db.main.game.findMany({
+                where: search
+                    ? {
+                          AND: search.split(" ").map((subSearch) => ({
+                              OR: [
+                                  {
+                                      opening: {
+                                          contains: subSearch,
+                                          mode: "insensitive",
+                                      },
+                                  },
+                                  {
+                                      opponent: {
+                                          contains: subSearch,
+                                          mode: "insensitive",
+                                      },
+                                  },
+                              ],
+                          })),
+                          account: {
+                              userId: ctx.session.user.id,
+                          },
+                      }
+                    : {
+                          account: {
+                              userId: ctx.session.user.id,
+                          },
+                      },
+                include: {
+                    account: {
+                        select: {
+                            platform: true,
+                        },
                     },
                 },
-            },
-            orderBy: {
-                date: "desc",
-            },
-        });
+                orderBy: {
+                    date: "desc",
+                },
+            });
 
-        return games;
-    }),
+            return games;
+        }),
     getOpenings: publicProcedure.query(async () => {
         const openings = await db.chess.opening.findMany();
 
