@@ -21,11 +21,9 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     const router = useRouter();
     const pathname = usePathname();
 
-    // lift the current move index to the page so other components (History) can adjust it
     const [moveIndex, setMoveIndex] = useState<number>(0);
     const positionsRef = useRef<string[]>(positions || []);
 
-    // initialize or reset move index when positions or URL search params change
     useEffect(() => {
         const mp = searchParams.get("move");
         if (mp !== null) {
@@ -51,7 +49,6 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         [router, pathname, searchParams],
     );
 
-    // keep the index in sync when the board's FEN changes (e.g., piece movement)
     function handleChangeFen(newFen: string) {
         if (!positionsRef.current) return;
         const idx = positionsRef.current.indexOf(newFen);
@@ -72,7 +69,6 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                         onChangeFen={handleChangeFen}
                     />
                     <Sidebar
-                        // @ts-expect-error
                         game={game}
                         positions={positions || []}
                         moves={game?.moves || []}
