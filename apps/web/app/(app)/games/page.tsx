@@ -7,8 +7,10 @@ import { Search } from "@/components/games/search";
 import { Loader } from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import { api, queryClient } from "@/lib/trpc";
+import { useModalStore } from "@/stores/modalStore";
 
 export default function DashboardPage() {
+    const { openModal } = useModalStore();
     const searchParams = useSearchParams();
     const query = searchParams.get("search") ?? undefined;
 
@@ -37,6 +39,7 @@ export default function DashboardPage() {
                     <header className="sticky top-0 bg-zinc-900 border-b border-zinc-800">
                         <section className="grid grid-cols-4 gap-5 p-5 border-b border-zinc-800">
                             <Search />
+                            <Button label="Filter" loading={false} onClick={() => openModal("filterGame")} />
                             <Button label="Sync" onClick={handleSync} loading={isPending} />
                         </section>
 
