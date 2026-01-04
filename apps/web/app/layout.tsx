@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter_Tight } from "next/font/google";
+import { ModalProvider } from "@/providers/modalProvider";
 import { QueryProvider } from "@/providers/queryProvider";
 import "./globals.css";
 
@@ -17,7 +18,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     return (
         <html lang="en" suppressHydrationWarning>
             <body className={`${interTight.variable} antialiased`}>
-                <QueryProvider>{children}</QueryProvider>
+                <QueryProvider>
+                    {children}
+                    <ModalProvider />
+                </QueryProvider>
             </body>
         </html>
     );
