@@ -1,5 +1,5 @@
 // TODO: implement database transactions
-import { db, Platform } from "@makora/db";
+import { Color, db, Platform, Termination, TimeControl } from "@makora/db";
 import { Chess } from "chess.js";
 import { z } from "zod";
 import { type ParsedPgn, parsePgn } from "../../lib/chess";
@@ -180,39 +180,45 @@ export const chessRouter = router({
         .input(
             z.object({
                 search: z.string().optional(),
+                platform: z.enum(Platform).optional(),
+                termination: z.enum(Termination).optional(),
+                timeControl: z.enum(TimeControl).optional(),
+                color: z.enum(Color).optional(),
+                reviewed: z.boolean().optional(),
             }),
         )
         .query(async ({ ctx, input }) => {
-            const { search } = input;
+            const { search, platform, termination, timeControl, color, reviewed } = input;
 
             const games = await db.main.game.findMany({
-                where: search
-                    ? {
-                          AND: search.split(" ").map((subSearch) => ({
-                              OR: [
-                                  {
-                                      opening: {
-                                          contains: subSearch,
-                                          mode: "insensitive",
-                                      },
-                                  },
-                                  {
-                                      opponent: {
-                                          contains: subSearch,
-                                          mode: "insensitive",
-                                      },
-                                  },
-                              ],
-                          })),
-                          account: {
-                              userId: ctx.session.user.id,
-                          },
-                      }
-                    : {
-                          account: {
-                              userId: ctx.session.user.id,
-                          },
-                      },
+                where: {
+                    account: {
+                        userId: ctx.session.user.id,
+                        ...(platform && { platform }),
+                    },
+                    ...(termination && { termination }),
+                    ...(timeControl && { timeControl }),
+                    ...(color && { color }),
+                    ...(reviewed !== undefined && { reviewed }),
+                    ...(search && {
+                        AND: search.split(" ").map((subSearch) => ({
+                            OR: [
+                                {
+                                    opening: {
+                                        contains: subSearch,
+                                        mode: "insensitive" as const,
+                                    },
+                                },
+                                {
+                                    opponent: {
+                                        contains: subSearch,
+                                        mode: "insensitive" as const,
+                                    },
+                                },
+                            ],
+                        })),
+                    }),
+                },
                 include: {
                     account: {
                         select: {
