@@ -1,18 +1,24 @@
 "use client";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
+import { useQueryState } from "nuqs";
 import { GamesTable } from "@/components/chess/gamesTable";
 import { Search } from "@/components/games/search";
 import { Loader } from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import { api, queryClient } from "@/lib/trpc";
 import { useModalStore } from "@/stores/modalStore";
-
+import { Color, Platform, Termination, TimeControl } from "@makora/db";
 export default function DashboardPage() {
     const { openModal } = useModalStore();
-    const searchParams = useSearchParams();
-    const query = searchParams.get("search") ?? undefined;
+
+    const [search] = useQueryState("search");
+    const [platform] = useQueryState("platform");
+    const [termination] = useQueryState("termination");
+    const [timeControl] = useQueryState("timeControl");
+    const [color] = useQueryState("color");
+    const [reviewed] = useQueryState("reviewed");
 
     const { mutateAsync, isPending } = useMutation(
         api.chess.syncGames.mutationOptions({
@@ -22,11 +28,17 @@ export default function DashboardPage() {
         }),
     );
 
-    const { data: games, isLoading } = useQuery(
-        api.chess.getGames.queryOptions({
-            search: query,
+    const { data: games, isLoading } = useQuery({
+        ...api.chess.getGames.queryOptions({
+            search: search || undefined,
+            platform: platform as Platform || undefined,
+            termination: termination as Termination || undefined,
+            timeControl: timeControl as TimeControl || undefined,
+            color: color as Color || undefined,
+            reviewed: reviewed === "true" ? true : reviewed === "false" ? false : undefined,
         }),
-    );
+        placeholderData: keepPreviousData,
+    });
 
     const handleSync = async () => mutateAsync();
 
