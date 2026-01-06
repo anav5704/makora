@@ -1,6 +1,6 @@
 "use client";
 
-import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { GamesTable } from "@/components/chess/gamesTable";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { api, queryClient } from "@/lib/trpc";
 import { useModalStore } from "@/stores/modalStore";
 import { Color, GamePhase, Platform, Termination, TimeControl } from "@makora/db";
+import { useEffect, useState } from "react";
 export default function DashboardPage() {
     const { openModal } = useModalStore();
 
@@ -20,6 +21,7 @@ export default function DashboardPage() {
     const [gamePhase] = useQueryState("gamePhase");
     const [color] = useQueryState("color");
     const [reviewed] = useQueryState("reviewed");
+    const filterKey = JSON.stringify({ search, platform, termination, timeControl, gamePhase, color, reviewed });
 
     const { mutateAsync, isPending } = useMutation(
         api.chess.syncGames.mutationOptions({
@@ -29,8 +31,8 @@ export default function DashboardPage() {
         }),
     );
 
-    const { data: games, isLoading } = useQuery({
-        ...api.chess.getGames.queryOptions({
+    const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } = useInfiniteQuery(
+        api.chess.getGames.infiniteQueryOptions({
             search: search || undefined,
             platform: platform as Platform || undefined,
             termination: termination as Termination || undefined,
@@ -38,9 +40,15 @@ export default function DashboardPage() {
             gamePhase: gamePhase as GamePhase || undefined,
             color: color as Color || undefined,
             reviewed: reviewed === "true" ? true : reviewed === "false" ? false : undefined,
-        }),
-        placeholderData: keepPreviousData,
-    });
+        },
+        {
+          getNextPageParam: (lastPage) => lastPage.cursor,
+          placeholderData: keepPreviousData,
+        }
+      )
+    );
+
+    const games = data?.pages.flatMap((page) => page.games) ?? []
 
     const handleSync = async () => mutateAsync();
 
@@ -67,7 +75,15 @@ export default function DashboardPage() {
                     </header>
 
                     {/*@ts-expect-error*/}
-                    <GamesTable games={games || []} />
+                    <GamesTable games={games} />
+
+                    {hasNextPage && (
+                        <Button
+                            label="Load More"
+                            onClick={() => fetchNextPage()}
+                            loading={isFetchingNextPage}
+                        />
+                    )}
                 </>
             )}
         </main>
