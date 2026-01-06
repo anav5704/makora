@@ -3,7 +3,8 @@ import { Color, db, GamePhase, Platform, Termination, TimeControl } from "@makor
 import { Chess } from "chess.js";
 import { z } from "zod";
 import { type ParsedPgn, parsePgn } from "../../lib/chess";
-import { protectedProcedure, publicProcedure, router } from "../index";
+import { protectedProcedure, router } from "../index";
+import { PAGE_SIZE } from "../../const"
 
 export const chessRouter = router({
     syncGames: protectedProcedure.mutation(async ({ ctx }) => {
@@ -179,6 +180,7 @@ export const chessRouter = router({
     getGames: protectedProcedure
         .input(
             z.object({
+                cursor: z.string().optional(),
                 search: z.string().optional(),
                 platform: z.enum(Platform).optional(),
                 termination: z.enum(Termination).optional(),
@@ -189,7 +191,7 @@ export const chessRouter = router({
             }),
         )
         .query(async ({ ctx, input }) => {
-            const { search, platform, termination, timeControl, gamePhase, color, reviewed } = input;
+            const { cursor, search, platform, termination, timeControl, gamePhase, color, reviewed } = input;
 
             const games = await db.main.game.findMany({
                 where: {
@@ -228,16 +230,20 @@ export const chessRouter = router({
                         },
                     },
                 },
-                orderBy: {
-                    date: "desc",
-                },
+                take: PAGE_SIZE,
+                ...(cursor && { skip: 1 }),
+                ...(cursor && { cursor: {
+                    id: cursor
+                }}),
+                orderBy: [
+                    { date: "desc" },
+                    { id: "desc" },
+                ],
             });
 
-            return games;
+            return {
+              games,
+              cursor: games.length == PAGE_SIZE ? games.at(-1)?.id : undefined
+            };
         }),
-    getOpenings: publicProcedure.query(async () => {
-        const openings = await db.chess.opening.findMany();
-
-        return openings;
-    }),
 });
