@@ -86,7 +86,7 @@ export function DonutChart({ title, data }: DonutChartProps) {
                             <Cell
                                 key={entry.name}
                                 stroke="none"
-                                fill={index === highestValueIndex ? "#a1a1aa" : "#27272a"}
+                                fill={index === highestValueIndex ? "#d4d4d8" : "#27272a"}
                                 strokeWidth={index === highestValueIndex ? 2 : 0}
                             />
                         ))}

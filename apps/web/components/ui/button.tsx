@@ -10,7 +10,7 @@ interface ButonProps {
 export const Button = ({ label, loading, onClick }: ButonProps) => {
     return (
         <Root
-            className="bg-zinc-400 text-zinc-900 px-4 py-2.5 rounded-md w-full cusor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+            className="bg-zinc-300 text-zinc-900 px-4 py-2.5 rounded-md w-full cusor-pointer disabled:cursor-not-allowed disabled:opacity-50"
             onClick={onClick}
             disabled={loading}>
             {loading ? <LoaderCircle size={24} className="animate-spin mx-auto" /> : <p>{label}</p>}
