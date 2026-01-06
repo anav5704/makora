@@ -1,5 +1,5 @@
 // TODO: implement database transactions
-import { Color, db, Platform, Termination, TimeControl } from "@makora/db";
+import { Color, db, GamePhase, Platform, Termination, TimeControl } from "@makora/db";
 import { Chess } from "chess.js";
 import { z } from "zod";
 import { type ParsedPgn, parsePgn } from "../../lib/chess";
@@ -183,12 +183,13 @@ export const chessRouter = router({
                 platform: z.enum(Platform).optional(),
                 termination: z.enum(Termination).optional(),
                 timeControl: z.enum(TimeControl).optional(),
+                gamePhase: z.enum(GamePhase).optional(),
                 color: z.enum(Color).optional(),
                 reviewed: z.boolean().optional(),
             }),
         )
         .query(async ({ ctx, input }) => {
-            const { search, platform, termination, timeControl, color, reviewed } = input;
+            const { search, platform, termination, timeControl, gamePhase, color, reviewed } = input;
 
             const games = await db.main.game.findMany({
                 where: {
@@ -198,6 +199,7 @@ export const chessRouter = router({
                     },
                     ...(termination && { termination }),
                     ...(timeControl && { timeControl }),
+                    ...(gamePhase && { gamePhase }),
                     ...(color && { color }),
                     ...(reviewed !== undefined && { reviewed }),
                     ...(search && {

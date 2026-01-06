@@ -9,7 +9,7 @@ import { Loader } from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import { api, queryClient } from "@/lib/trpc";
 import { useModalStore } from "@/stores/modalStore";
-import { Color, Platform, Termination, TimeControl } from "@makora/db";
+import { Color, GamePhase, Platform, Termination, TimeControl } from "@makora/db";
 export default function DashboardPage() {
     const { openModal } = useModalStore();
 
@@ -17,6 +17,7 @@ export default function DashboardPage() {
     const [platform] = useQueryState("platform");
     const [termination] = useQueryState("termination");
     const [timeControl] = useQueryState("timeControl");
+    const [gamePhase] = useQueryState("gamePhase");
     const [color] = useQueryState("color");
     const [reviewed] = useQueryState("reviewed");
 
@@ -34,6 +35,7 @@ export default function DashboardPage() {
             platform: platform as Platform || undefined,
             termination: termination as Termination || undefined,
             timeControl: timeControl as TimeControl || undefined,
+            gamePhase: gamePhase as GamePhase || undefined,
             color: color as Color || undefined,
             reviewed: reviewed === "true" ? true : reviewed === "false" ? false : undefined,
         }),
