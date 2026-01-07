@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 // Move interface removed (unused)
 
 interface BoardProps {
+    size: number;
     fen: string;
     orientation: Color;
     onChangeFen?: (fen: string) => void;
@@ -17,7 +18,7 @@ interface BoardProps {
     config?: Partial<Config>;
 }
 
-export const Core = ({ fen, orientation, onChangeFen, onApiReady, config }: BoardProps) => {
+export const Core = ({ size, fen, orientation, onChangeFen, onApiReady, config }: BoardProps) => {
     const ref = useRef<HTMLDivElement | null>(null);
     const [api, setApi] = useState<Api | null>(null);
 
@@ -80,7 +81,7 @@ export const Core = ({ fen, orientation, onChangeFen, onApiReady, config }: Boar
             ref={ref}
             style={{
                 aspectRatio: 1,
-                height: 700,
+                width: size
             }}
         />
     );
