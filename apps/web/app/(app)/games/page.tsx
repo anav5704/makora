@@ -3,7 +3,7 @@
 import { keepPreviousData, useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
-import { GamesTable } from "@/components/chess/gamesTable";
+import { GamesList } from "@/components/games/gamesList";
 import { Search } from "@/components/games/search";
 import { Loader } from "@/components/loader";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import { api, queryClient } from "@/lib/trpc";
 import { useModalStore } from "@/stores/modalStore";
 import { Color, GamePhase, Platform, Termination, TimeControl } from "@makora/db";
 import { useEffect, useState } from "react";
+import { View } from "@/components/games/view";
+import { GamesGrid } from "@/components/games/gamesGrid";
 export default function DashboardPage() {
     const { openModal } = useModalStore();
 
@@ -21,7 +23,7 @@ export default function DashboardPage() {
     const [gamePhase] = useQueryState("gamePhase");
     const [color] = useQueryState("color");
     const [reviewed] = useQueryState("reviewed");
-    const filterKey = JSON.stringify({ search, platform, termination, timeControl, gamePhase, color, reviewed });
+    const [view] = useQueryState("view")
 
     const { mutateAsync, isPending } = useMutation(
         api.chess.syncGames.mutationOptions({
@@ -58,24 +60,33 @@ export default function DashboardPage() {
                 <Loader />
             ) : (
                 <>
-                    <header className="sticky top-0 bg-zinc-900 border-b border-zinc-800">
+                    <header className="z-10 sticky top-0 bg-zinc-900 border-b border-zinc-800">
                         <section className="grid grid-cols-4 gap-5 p-5 border-b border-zinc-800">
                             <Search />
                             <Button label="Filter" loading={false} onClick={() => openModal("filterGame")} />
+                            <View />
                             <Button label="Sync" onClick={handleSync} loading={isPending} />
                         </section>
 
-                        <p className="p-5 text-sm uppercase font-bold grid grid-cols-8 border-none">
-                            <span className="col-span-4">Opening</span>
-                            <span className="col-span-1">Phase</span>
-                            <span className="col-span-1">Termination</span>
-                            <span className="col-span-1">Moves</span>
-                            <span className="col-span-1">Played</span>
-                        </p>
+                        {view === "list" && (
+                          <p className="p-5 text-sm uppercase font-bold grid grid-cols-8 border-none">
+                              <span className="col-span-4">Opening</span>
+                              <span className="col-span-1">Phase</span>
+                              <span className="col-span-1">Termination</span>
+                              <span className="col-span-1">Moves</span>
+                              <span className="col-span-1">Played</span>
+                          </p>
+                        )}
                     </header>
 
-                    {/*@ts-expect-error*/}
-                    <GamesTable games={games} />
+                    {view === "list" ? (
+                      // @ts-expect-error
+                        <GamesList games={games} />
+                    ) : (
+                      // @ts-expect-error
+                      <GamesGrid games={games} />
+                    )}
+
 
                     {hasNextPage && (
                         <Button
