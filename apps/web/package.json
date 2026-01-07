@@ -17,6 +17,7 @@
         "@trpc/client": "catalog:trpc",
         "@trpc/server": "catalog:trpc",
         "@trpc/tanstack-react-query": "^11.5.0",
+        "chess.js": "catalog:chess",
         "babel-plugin-react-compiler": "^1.0.0",
         "better-auth": "catalog:better-auth",
         "date-fns": "^4.1.0",
