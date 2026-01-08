@@ -18,6 +18,10 @@
     }
 }
 
+* {
+    @apply focus:outline-none;
+}
+
 body {
     background: var(--background);
     color: var(--foreground);
@@ -45,4 +49,8 @@ h3 {
     width: 0;
     height: 0;
     display: none;
+}
+
+button {
+    @apply cursor-pointer!;
 }
