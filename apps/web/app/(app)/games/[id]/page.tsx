@@ -2,12 +2,13 @@
 
 import type { Color } from "@lichess-org/chessground/types";
 import { useQuery } from "@tanstack/react-query";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import { FullBoard } from "@/components/chess/board/fullBoard";
 import { Sidebar } from "@/components/chess/board/sidebar";
 import { Loader } from "@/components/loader";
 import { api } from "@/lib/trpc";
+import { useQueryState } from "nuqs";
 
 export default function GamePage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -17,17 +18,13 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         }),
     );
 
-    const searchParams = useSearchParams();
-    const router = useRouter();
-    const pathname = usePathname();
-
-    const [moveIndex, setMoveIndex] = useState<number>(0);
+    const [move, setMove] = useQueryState("move");
+   const [moveIndex, setMoveIndex] = useState<number>(0);
     const positionsRef = useRef<string[]>(positions || []);
 
     useEffect(() => {
-        const mp = searchParams.get("move");
-        if (mp !== null) {
-            const parsed = parseInt(mp, 10);
+        if (move !== null) {
+          const parsed = parseInt(move, 10);
             if (!Number.isNaN(parsed)) {
                 setMoveIndex(parsed);
             } else {
@@ -37,16 +34,14 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
             setMoveIndex(0);
         }
         positionsRef.current = positions || [];
-    }, [positions, searchParams]);
+    }, [positions, move]);
 
     const gotoMove = useCallback(
         (index: number) => {
             setMoveIndex(index);
-            const params = new URLSearchParams(searchParams?.toString() ?? "");
-            params.set("move", String(index));
-            router.push(`${pathname}?${params.toString()}` as any);
+            setMove(String(index));
         },
-        [router, pathname, searchParams],
+        [setMove],
     );
 
     function handleChangeFen(newFen: string) {
@@ -69,6 +64,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                         onChangeFen={handleChangeFen}
                     />
                     <Sidebar
+                        // @ts-expect-error
                         game={game}
                         positions={positions || []}
                         moves={game?.moves || []}
