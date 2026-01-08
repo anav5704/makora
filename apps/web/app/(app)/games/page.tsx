@@ -1,7 +1,6 @@
 "use client";
 
 import { keepPreviousData, useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { GamesList } from "@/components/games/gamesList";
 import { Search } from "@/components/games/search";
@@ -10,9 +9,7 @@ import { Button } from "@/components/ui/button";
 import { api, queryClient } from "@/lib/trpc";
 import { useModalStore } from "@/stores/modalStore";
 import { Color, GamePhase, Platform, Termination, TimeControl } from "@makora/db";
-import { useEffect, useState } from "react";
-import { View } from "@/components/games/view";
-import { Section } from "lucide-react";
+// import { View } from "@/components/games/view";
 // import { GamesGrid } from "@/components/games/gamesGrid";
 export default function DashboardPage() {
     const { openModal } = useModalStore();

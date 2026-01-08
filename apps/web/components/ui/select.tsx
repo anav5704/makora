@@ -42,6 +42,7 @@ export const Select = <T,>({ options, selectedItem, setSelectedItem, label, id, 
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
+                          // @ts-expect-error
                           transition={{ duration: 0.1 }}
                           anchor="bottom"
                         className="w-(--button-width) z-10 origin-top mt-2 p-2 rounded-md border border-zinc-800 bg-zinc-900"
