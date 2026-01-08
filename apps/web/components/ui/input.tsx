@@ -7,22 +7,23 @@ interface InputProps {
     value: string | number;
     label?: string;
     placeholder?: string;
+  className?: string;
     onChange: (e: ChangeEvent<HTMLInputElement>) => void;
-    onKeyDown?: (e: KeyboardEventHandler<HTMLInputElement>) => void;
+  onKeyDown?: KeyboardEventHandler<HTMLInputElement>;
 }
 
-export const Input = ({ name, type, value, label, placeholder, onChange, onKeyDown }: InputProps) => {
+export const Input = ({ name, type, value, label, placeholder, className, onChange, onKeyDown }: InputProps) => {
     return (
-        <Field>
-            {label && <Label className="mb-2.5">{label}</Label>}
+        <Field className={className}>
+            {label && <Label>{label}</Label>}
             <Root
-                className="block px-4 py-2.5 w-full rounded-md border border-zinc-800 bg-zinc-900"
-                name={name}
-                type={type}
-                value={value}
-                placeholder={placeholder}
-                onChange={onChange}
-                onKeyDown={onKeyDown}
+          name={name}
+          type={type}
+          value={value}
+          placeholder={placeholder}
+          onChange={onChange}
+          onKeyDown={onKeyDown}
+          className={`${label && "mt-2.5"} block px-4 py-2.5 w-full rounded-md border border-zinc-800 bg-zinc-900`}
             />
         </Field>
     );

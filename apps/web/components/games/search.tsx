@@ -31,6 +31,7 @@ export const Search = () => {
             placeholder="Search by opening or opponent"
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            className="col-span-3"
         />
     );
 };

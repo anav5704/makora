@@ -7,8 +7,6 @@ import type { Config } from "@lichess-org/chessground/config";
 import type { Color } from "@lichess-org/chessground/types";
 import { useEffect, useRef, useState } from "react";
 
-// Move interface removed (unused)
-
 interface BoardProps {
     size: number;
     fen: string;
