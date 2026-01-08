@@ -12,7 +12,8 @@ import { useModalStore } from "@/stores/modalStore";
 import { Color, GamePhase, Platform, Termination, TimeControl } from "@makora/db";
 import { useEffect, useState } from "react";
 import { View } from "@/components/games/view";
-import { GamesGrid } from "@/components/games/gamesGrid";
+import { Section } from "lucide-react";
+// import { GamesGrid } from "@/components/games/gamesGrid";
 export default function DashboardPage() {
     const { openModal } = useModalStore();
 
@@ -23,7 +24,7 @@ export default function DashboardPage() {
     const [gamePhase] = useQueryState("gamePhase");
     const [color] = useQueryState("color");
     const [reviewed] = useQueryState("reviewed");
-    const [view] = useQueryState("view")
+    // const [view] = useQueryState("view")
 
     const { mutateAsync, isPending } = useMutation(
         api.chess.syncGames.mutationOptions({
@@ -61,14 +62,14 @@ export default function DashboardPage() {
             ) : (
                 <>
                     <header className="z-10 sticky top-0 bg-zinc-900 border-b border-zinc-800">
-                        <section className="grid grid-cols-4 gap-5 p-5 border-b border-zinc-800">
+                        <section className="grid grid-cols-5 gap-5 p-5 border-b border-zinc-800">
                             <Search />
-                            <Button label="Filter" loading={false} onClick={() => openModal("filterGame")} />
-                            <View />
-                            <Button label="Sync" onClick={handleSync} loading={isPending} />
+                            <Button variant="outline" label="Filter" loading={false} onClick={() => openModal("filterGame")} />
+                            {/*<View />*/}
+                            <Button variant="outline" label="Sync" onClick={handleSync} loading={isPending} />
                         </section>
 
-                        {view === "list" && (
+                        {/*{view === "list" && (*/}
                           <p className="p-5 text-sm uppercase font-bold grid grid-cols-8 border-none">
                               <span className="col-span-4">Opening</span>
                               <span className="col-span-1">Phase</span>
@@ -76,24 +77,29 @@ export default function DashboardPage() {
                               <span className="col-span-1">Moves</span>
                               <span className="col-span-1">Played</span>
                           </p>
-                        )}
+                        {/*)}*/}
                     </header>
 
-                    {view === "list" ? (
+                    {/*{view === "list" ? (
                       // @ts-expect-error
                         <GamesList games={games} />
                     ) : (
                       // @ts-expect-error
                       <GamesGrid games={games} />
-                    )}
+                    )}*/}
 
+                     {/*@ts-expect-error*/}
+                    <GamesList games={games} />
 
                     {hasNextPage && (
+                    <section className="w-1/5 mx-auto m-7.5">
                         <Button
+                        variant="outline"
                             label="Load More"
                             onClick={() => fetchNextPage()}
                             loading={isFetchingNextPage}
                         />
+                    </section>
                     )}
                 </>
             )}
