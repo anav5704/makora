@@ -1,36 +1,37 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
+import { useQueryState } from "nuqs";
 
 export const Search = () => {
-    const router = useRouter();
-    const pathname = usePathname();
-    const searchParams = useSearchParams();
+    const [search, setSearch] = useQueryState("search");
+    const [query, setQuery] = useState(search || "")
 
-    const [query, setQuery] = useState(searchParams.get("search"));
+    useEffect(() => {
+        setQuery(search || "");
+    }, [search]);
 
-    const handleSearch = () => {
-        const params = new URLSearchParams(searchParams);
+    // Debounce the search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (query) {
+                setSearch(query);
+            } else {
+                setSearch(null);
+            }
+        }, 300);
 
-        if (query) {
-            params.set("search", query);
-        } else {
-            params.delete("search");
-        }
-
-        router.replace(`${pathname}?${params.toString()}` as any);
-    };
+        return () => clearTimeout(timer);
+    }, [query, setSearch]);
 
     return (
         <Input
             name="search"
             type="text"
-            value={query || ""}
+            value={query}
             placeholder="Search by opening or opponent"
             onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             className="col-span-3"
         />
     );
