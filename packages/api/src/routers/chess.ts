@@ -243,7 +243,7 @@ export const chessRouter = router({
 
             return {
               games,
-              cursor: games.length == PAGE_SIZE ? games.at(-1)?.id : undefined
+              cursor: games.length === PAGE_SIZE ? games.at(-1)?.id : undefined
             };
         }),
 });

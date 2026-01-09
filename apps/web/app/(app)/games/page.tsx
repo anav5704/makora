@@ -1,6 +1,6 @@
 "use client";
 
-import { keepPreviousData, useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useMutation } from "@tanstack/react-query";
 import { useQueryState } from "nuqs";
 import { GamesList } from "@/components/games/gamesList";
 import { Search } from "@/components/games/search";
@@ -8,7 +8,7 @@ import { Loader } from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import { api, queryClient } from "@/lib/trpc";
 import { useModalStore } from "@/stores/modalStore";
-import { Color, GamePhase, Platform, Termination, TimeControl } from "@makora/db";
+import type { Color, GamePhase, Platform, Termination, TimeControl } from "@makora/db";
 // import { View } from "@/components/games/view";
 // import { GamesGrid } from "@/components/games/gamesGrid";
 export default function DashboardPage() {
