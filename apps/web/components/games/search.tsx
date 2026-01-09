@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useQueryState } from "nuqs";
+import { useState, useEffect } from "react";
+import { SEARCH_DEBOUNCE } from "@/const"
 
 export const Search = () => {
     const [search, setSearch] = useQueryState("search");
@@ -12,7 +13,6 @@ export const Search = () => {
         setQuery(search || "");
     }, [search]);
 
-    // Debounce the search
     useEffect(() => {
         const timer = setTimeout(() => {
             if (query) {
@@ -20,7 +20,7 @@ export const Search = () => {
             } else {
                 setSearch(null);
             }
-        }, 300);
+        }, SEARCH_DEBOUNCE);
 
         return () => clearTimeout(timer);
     }, [query, setSearch]);
