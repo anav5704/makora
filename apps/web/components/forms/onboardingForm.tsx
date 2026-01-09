@@ -46,7 +46,7 @@ export const OnboardingForm = () => {
                     setUsername={setUsername}
                 />
 
-                <Button label="Sign In" loading={isPending} onClick={handleOnboard} />
+                <Button variant="solid" label="Continue" loading={isPending} onClick={handleOnboard} />
             </Fieldset>
 
             <p className="text-center mt-5 text-zinc-400">You can add more accounts later</p>

@@ -12,7 +12,7 @@ export const NavLink = ({ label, href, icon: Icon, isActive }: NavLinkProps) => 
     return (
         <Link
             href={{ pathname: href }}
-            className={`${isActive && "bg-zinc-400 text-zinc-900"} flex gap-3 p-3 rounded-md `}>
+            className={`${isActive && "bg-zinc-300 text-zinc-900"} flex gap-3 p-3 rounded-md transition duration-300`}>
             <Icon size={24} />
             {label}
         </Link>

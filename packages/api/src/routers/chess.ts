@@ -1,9 +1,10 @@
 // TODO: implement database transactions
-import { db, Platform } from "@makora/db";
-import { type ParsedPgn, parsePgn } from "../../lib/chess";
-import { protectedProcedure, publicProcedure, router } from "../index";
-import { z }  from "zod"
+import { Color, db, GamePhase, Platform, Termination, TimeControl } from "@makora/db";
 import { Chess } from "chess.js";
+import { z } from "zod";
+import { type ParsedPgn, parsePgn } from "../../lib/chess";
+import { protectedProcedure, router } from "../index";
+import { PAGE_SIZE } from "../../const"
 
 export const chessRouter = router({
     syncGames: protectedProcedure.mutation(async ({ ctx }) => {
@@ -152,45 +153,97 @@ export const chessRouter = router({
         }
     }),
     getGame: protectedProcedure
-      .input(z.object({
-          id: z.string()
-      }))
-      .query(async ({ input }) => {
-          const game = await db.main.game.findUnique({
-            where: {
-              id: input.id
-            }
-          })
-
-          if(!game) return
-
-          const chess = new Chess()
-          const positions: string[] = [chess.fen()]
-
-          for(const move of game.moves) {
-            chess.move(move)
-            positions.push(chess.fen())
-          }
-
-          return { game, positions }
-    }),
-    getGames: protectedProcedure.query(async ({ ctx }) => {
-        const games = await db.main.game.findMany({
-            where: {
-                account: {
-                    userId: ctx.session.user.id,
+        .input(
+            z.object({
+                id: z.string(),
+            }),
+        )
+        .query(async ({ input }) => {
+            const game = await db.main.game.findUnique({
+                where: {
+                    id: input.id,
                 },
-            },
-            orderBy: {
-                date: "desc",
-            },
-        });
+            });
 
-        return games;
-    }),
-    getOpenings: publicProcedure.query(async () => {
-        const openings = await db.chess.opening.findMany();
+            if (!game) return;
 
-        return openings;
-    }),
+            const chess = new Chess();
+            const positions: string[] = [chess.fen()];
+
+            for (const move of game.moves) {
+                chess.move(move);
+                positions.push(chess.fen());
+            }
+
+            return { game, positions };
+        }),
+    getGames: protectedProcedure
+        .input(
+            z.object({
+                cursor: z.string().optional(),
+                search: z.string().optional(),
+                platform: z.enum(Platform).optional(),
+                termination: z.enum(Termination).optional(),
+                timeControl: z.enum(TimeControl).optional(),
+                gamePhase: z.enum(GamePhase).optional(),
+                color: z.enum(Color).optional(),
+                reviewed: z.boolean().optional(),
+            }),
+        )
+        .query(async ({ ctx, input }) => {
+            const { cursor, search, platform, termination, timeControl, gamePhase, color, reviewed } = input;
+
+            const games = await db.main.game.findMany({
+                where: {
+                    account: {
+                        userId: ctx.session.user.id,
+                        ...(platform && { platform }),
+                    },
+                    ...(termination && { termination }),
+                    ...(timeControl && { timeControl }),
+                    ...(gamePhase && { gamePhase }),
+                    ...(color && { color }),
+                    ...(reviewed !== undefined && { reviewed }),
+                    ...(search && {
+                        AND: search.split(" ").map((subSearch) => ({
+                            OR: [
+                                {
+                                    opening: {
+                                        contains: subSearch,
+                                        mode: "insensitive" as const,
+                                    },
+                                },
+                                {
+                                    opponent: {
+                                        contains: subSearch,
+                                        mode: "insensitive" as const,
+                                    },
+                                },
+                            ],
+                        })),
+                    }),
+                },
+                include: {
+                    account: {
+                        select: {
+                            platform: true,
+                        },
+                    },
+                },
+                take: PAGE_SIZE,
+                ...(cursor && { skip: 1 }),
+                ...(cursor && { cursor: {
+                    id: cursor
+                }}),
+                orderBy: [
+                    { date: "desc" },
+                    { id: "desc" },
+                ],
+            });
+
+            return {
+              games,
+              cursor: games.length === PAGE_SIZE ? games.at(-1)?.id : undefined
+            };
+        }),
 });

@@ -1,33 +1,33 @@
 {
-  "name": "@makora/api",
-  "type": "module",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./src/index.ts"
+    "name": "@makora/api",
+    "type": "module",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "default": "./src/index.ts"
+        },
+        "./*": {
+            "types": "./dist/*.d.ts",
+            "default": "./src/*.ts"
+        }
     },
-    "./*": {
-      "types": "./dist/*.d.ts",
-      "default": "./src/*.ts"
+    "scripts": {
+        "build": "tsdown"
+    },
+    "devDependencies": {
+        "tsdown": "catalog:tsdown"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    },
+    "dependencies": {
+        "@makora/auth": "workspace:*",
+        "@makora/db": "workspace:*",
+        "@trpc/client": "catalog:trpc",
+        "@trpc/server": "catalog:trpc",
+        "chess.js": "catalog:chess",
+        "dotenv": "catalog:dotenv",
+        "next": "16.0.10",
+        "zod": "catalog:zod"
     }
-  },
-  "scripts": {
-    "build": "tsdown"
-  },
-  "devDependencies": {
-    "tsdown": "catalog:tsdown"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  },
-  "dependencies": {
-    "@makora/auth": "workspace:*",
-    "@makora/db": "workspace:*",
-    "@trpc/client": "catalog:trpc",
-    "@trpc/server": "catalog:trpc",
-    "chess.js": "catalog:chess",
-    "dotenv": "catalog:dotenv",
-    "next": "16.0.10",
-    "zod": "catalog:zod"
-  }
 }

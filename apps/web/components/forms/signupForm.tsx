@@ -64,7 +64,7 @@ export const SignupForm = () => {
                     onChange={(e) => setPassword(e.target.value)}
                 />
 
-                <Button label="Sign Up" loading={loading} onClick={handleSignup} />
+                <Button variant="solid" label="Sign Up" loading={loading} onClick={handleSignup} />
             </Fieldset>
 
             <p className="text-center mt-5 text-zinc-400">
