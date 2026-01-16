@@ -1,9 +1,10 @@
 "use client";
 
 import type { Game } from "@makora/db";
-import { Fragment, type Dispatch, type SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { GameControls } from "@/components/chess/board/sidebar/gameControls";
-import { Tab, TabGroup, TabList, TabPanel, TabPanels } from "@headlessui/react";
+import { NoteControls } from "@/components/chess/board/sidebar/noteControls";
+import { Activity, useState } from "react";
 
 interface GameDetailsProps {
     game: Game;
@@ -22,29 +23,54 @@ export const Sidebar = ({
     setMoveIndex,
     onNavigate,
 }: GameDetailsProps) => {
-    return (
-      <TabGroup as="aside" className="max-h-screen w-72 border-l border-zinc-800 flex flex-col">
-        <TabList className="p-5 border-b border-zinc-800 grid grid-cols-2">
-             <Tab className="col-span-1 data-selected:bg-zinc-700 duration-300 transition rounded-md p-3">Game</Tab>
-             <Tab className="col-span-1 data-selected:bg-zinc-700 duration-300 transition rounded-md p-3">Notes</Tab>
-           </TabList>
+    const [activeTab, setActiveTab] = useState<'game' | 'notes'>('game');
 
-           <TabPanels className="flex-1 overflow-hidden">
-             <TabPanel className="h-full flex flex-col justify-end divide-y divide-zinc-800 overflow-scroll">
-            <GameControls
-                    game={game}
-                    positions={positions}
-                    moves={moves}
-                    moveIndex={moveIndex}
-                    setMoveIndex={setMoveIndex}
-                    onNavigate={onNavigate}
-            />
-          </TabPanel>
-          <TabPanel>
-             {/*notes and tags*/}
-             </TabPanel>
-           </TabPanels>
-         </TabGroup>
+    return (
+      <aside className="max-h-screen w-72 border-l border-zinc-800 flex flex-col">
+        <div className="p-5 border-b border-zinc-800 grid grid-cols-2">
+             <button
+                 type="button"
+                 className={`col-span-1 duration-300 transition rounded-md p-3 ${
+                     activeTab === 'game' ? 'bg-zinc-800' : ''
+                 }`}
+                 onClick={() => setActiveTab('game')}
+             >
+                 Game
+             </button>
+             <button
+                 type="button"
+                 className={`col-span-1 duration-300 transition rounded-md p-3 ${
+                     activeTab === 'notes' ? 'bg-zinc-800' : ''
+                 }`}
+                 onClick={() => setActiveTab('notes')}
+             >
+                 Notes
+             </button>
+           </div>
+
+           <div className="flex-1 overflow-hidden">
+             {/* Game Tab */}
+             <Activity mode={activeTab === 'game' ? 'visible' : 'hidden'}>
+               <div className="h-full flex flex-col justify-end divide-y divide-zinc-800 overflow-scroll">
+                 <GameControls
+                         game={game}
+                         positions={positions}
+                         moves={moves}
+                         moveIndex={moveIndex}
+                         setMoveIndex={setMoveIndex}
+                         onNavigate={onNavigate}
+                 />
+               </div>
+             </Activity>
+
+             {/* Notes Tab */}
+             <Activity mode={activeTab === 'notes' ? 'visible' : 'hidden'}>
+               <div className="h-full flex flex-col">
+                 <NoteControls gameId={game.id} defaultNotes={game.notes} />
+               </div>
+             </Activity>
+           </div>
+         </aside>
 
     );
 };
