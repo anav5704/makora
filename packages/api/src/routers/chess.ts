@@ -246,4 +246,21 @@ export const chessRouter = router({
               cursor: games.length === PAGE_SIZE ? games.at(-1)?.id : undefined
             };
         }),
+  updateNotes: protectedProcedure
+    .input(
+      z.object({
+        gameId: z.string(),
+        notes: z.string()
+      })
+    )
+    .mutation(async ({ input }) => {
+      await db.main.game.update({
+        where: {
+          id: input.gameId,
+        },
+        data: {
+          notes: input.notes
+        }
+        })
+    })
 });
