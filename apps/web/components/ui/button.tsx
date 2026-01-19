@@ -18,7 +18,7 @@ export const Button = ({ label, loading, variant, className, onClick }: ButonPro
       break
     }
     case "outline":
-      variantStyle = "bg-zinc-900 text-white border border-zinc-800"
+      variantStyle = "bg-zinc-900 text-white border-zinc-800"
       break
   }
 

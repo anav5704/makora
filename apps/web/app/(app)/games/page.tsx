@@ -61,9 +61,9 @@ export default function DashboardPage() {
                     <header className="z-10 sticky top-0 bg-zinc-900 border-b border-zinc-800">
                         <section className="grid grid-cols-5 gap-5 p-5 border-b border-zinc-800">
                             <Search />
-                            <Button variant="outline" label="Filter" loading={false} onClick={() => openModal("filterGame")} />
+                            <Button className="border" variant="outline" label="Filter" loading={false} onClick={() => openModal("filterGame")} />
                             {/*<View />*/}
-                            <Button variant="outline" label="Sync" onClick={handleSync} loading={isPending} />
+                            <Button className="border" variant="outline" label="Sync" onClick={handleSync} loading={isPending} />
                         </section>
 
                         {/*{view === "list" && (*/}
@@ -91,7 +91,8 @@ export default function DashboardPage() {
                     {hasNextPage && (
                     <section className="w-1/5 mx-auto m-7.5">
                         <Button
-                        variant="outline"
+                            variant="outline"
+                            className="border"
                             label="Load More"
                             onClick={() => fetchNextPage()}
                             loading={isFetchingNextPage}

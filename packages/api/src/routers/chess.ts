@@ -5,6 +5,7 @@ import { z } from "zod";
 import { type ParsedPgn, parsePgn } from "../../lib/chess";
 import { protectedProcedure, router } from "../index";
 import { PAGE_SIZE } from "../../const"
+import { spawn } from "node:child_process";
 
 export const chessRouter = router({
     syncGames: protectedProcedure.mutation(async ({ ctx }) => {
@@ -246,7 +247,37 @@ export const chessRouter = router({
               cursor: games.length === PAGE_SIZE ? games.at(-1)?.id : undefined
             };
         }),
-  updateNotes: protectedProcedure
+  analyzeGame: protectedProcedure
+    .input(
+      z.object({
+        gameId: z.string()
+      })
+    )
+    .mutation(async ({ input }) => {
+      const game = await db.main.game.findUnique({
+          where: {
+            id: input.gameId
+          },
+          select: {
+            moves: true
+          }
+        })
+
+      console.log("Analyzing game:", game?.moves)
+
+      const stockfish = spawn("stockfish")
+
+      stockfish.stdin.write("uci\n")
+
+      stockfish.stdout.on("data", (data) => {
+        console.log(data.toString());
+      });
+
+      stockfish.on("error", (err) => {
+        console.error("Stockfish error:", err);
+      });
+    }),
+    updateNotes: protectedProcedure
     .input(
       z.object({
         gameId: z.string(),

@@ -25,14 +25,13 @@ export const NoteControls = ({ gameId, defaultNotes }: NoteControlsProps) => {
         onChange={(e) => { setNotes(e.target.value) }}
         className="resize-none flex-1"
       />
-      <div className="p-5 border-t border-zinc-800">
-          <Button
-              label="Update"
-              loading={isPending}
-              onClick={handleUpdate}
-              variant="outline"
-          />
-      </div>
+        <Button
+            label="Update"
+            loading={isPending}
+            onClick={handleUpdate}
+            variant="outline"
+            className="`rounded-none p-5!"
+        />
     </>
   )
 }

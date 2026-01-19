@@ -8,7 +8,7 @@ import type { Color } from "@lichess-org/chessground/types";
 import { useEffect, useRef, useState } from "react";
 
 interface BoardProps {
-    size: number;
+    size: string;
     fen: string;
     orientation: Color;
     onChangeFen?: (fen: string) => void;

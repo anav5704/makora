@@ -65,7 +65,7 @@ export const Sidebar = ({
 
              {/* Notes Tab */}
              <Activity mode={activeTab === 'notes' ? 'visible' : 'hidden'}>
-               <div className="h-full flex flex-col">
+               <div className="h-full flex flex-col divide-y divide-zinc-800">
                  <NoteControls gameId={game.id} defaultNotes={game.notes} />
                </div>
              </Activity>

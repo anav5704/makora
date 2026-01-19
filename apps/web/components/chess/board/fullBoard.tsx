@@ -28,7 +28,7 @@ export const FullBoard = ({ positions, orientation, moveIndex, setMoveIndex, onC
 
     return (
         <div className="grow h-full grid place-content-center">
-            <Core size={700} onChangeFen={onChangeFen} orientation={orientation} fen={fen} onWheel={handleWheel} />
+            <Core size="80vh" onChangeFen={onChangeFen} orientation={orientation} fen={fen} onWheel={handleWheel} />
         </div>
     );
 };
