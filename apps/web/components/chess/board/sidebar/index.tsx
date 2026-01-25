@@ -1,5 +1,4 @@
 "use client";
-
 import type { Game } from "@makora/db";
 import type { Dispatch, SetStateAction } from "react";
 import { GameControls } from "@/components/chess/board/sidebar/gameControls";

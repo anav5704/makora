@@ -2,10 +2,10 @@
 import { Color, db, GamePhase, Platform, Termination, TimeControl } from "@makora/db";
 import { Chess } from "chess.js";
 import { z } from "zod";
-import { type ParsedPgn, parsePgn } from "../../lib/chess";
+import { type ParsedPgn, parsePgn } from "../../lib/parsePgn";
 import { protectedProcedure, router } from "../index";
 import { PAGE_SIZE } from "../../const"
-import { spawn } from "node:child_process";
+import { getEval } from "../../lib/getEval";
 
 export const chessRouter = router({
     syncGames: protectedProcedure.mutation(async ({ ctx }) => {
@@ -76,11 +76,6 @@ export const chessRouter = router({
                         data: {
                             accountId: id,
                             ...game,
-                            evaluation: {
-                                create: {
-                                    accuracy: Math.random() * 100,
-                                },
-                            },
                         },
                     });
                 }
@@ -131,11 +126,6 @@ export const chessRouter = router({
                                 data: {
                                     accountId: id,
                                     ...game,
-                                    evaluation: {
-                                        create: {
-                                            accuracy: Math.random() * 100,
-                                        },
-                                    },
                                 },
                             });
                         }
@@ -163,7 +153,10 @@ export const chessRouter = router({
             const game = await db.main.game.findUnique({
                 where: {
                     id: input.id,
-                },
+              },
+              include: {
+                evaluation: true
+              }
             });
 
             if (!game) return;
@@ -253,29 +246,37 @@ export const chessRouter = router({
         gameId: z.string()
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input: { gameId } }) => {
+      const evaluation = await db.main.evaluation.findUnique({
+        where: {
+          gameId
+        }
+      })
+
+      if (evaluation) return
+
       const game = await db.main.game.findUnique({
           where: {
-            id: input.gameId
+            id: gameId
           },
           select: {
             moves: true
           }
         })
 
-      console.log("Analyzing game:", game?.moves)
+      if(!game) return
 
-      const stockfish = spawn("stockfish")
+      const results = await getEval(game.moves)
 
-      stockfish.stdin.write("uci\n")
+      await db.main.evaluation.create({
+        data: {
+          gameId,
+          accuracy: Math.random() * 100,
+          results: results as any
+        }
+      })
 
-      stockfish.stdout.on("data", (data) => {
-        console.log(data.toString());
-      });
-
-      stockfish.on("error", (err) => {
-        console.error("Stockfish error:", err);
-      });
+      console.log(results)
     }),
     updateNotes: protectedProcedure
     .input(

@@ -1,6 +1,6 @@
 "use client";
 
-import type { Game } from "@makora/db";
+import type { Game, Evaluation } from "@makora/db";
 import type { Dispatch, SetStateAction } from "react";
 import { Controls } from "@/components/chess/board/controls";
 import { History } from "@/components/chess/board/history";
@@ -10,7 +10,7 @@ import { api } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 
 interface GameControlsProps {
-    game: Game;
+    game: Game & { evaluation: Evaluation };
     positions?: string[];
     moves?: string[];
     moveIndex?: number;
@@ -34,17 +34,22 @@ export const GameControls = ({
 
           <Controls positions={positions} moveIndex={moveIndex} setMoveIndex={setMoveIndex} />
 
-          <Button
-              label="Computer Analysis"
-              onClick={async () => mutateAsync({ gameId: game.id })}
-              className="rounded-none p-5!"
-              loading={isPending}
-              variant="outline"
-        />
+          {game.evaluation ? (
+              <p className="p-5 text-center">Accuracy: {game.evaluation.accuracy.toFixed(2)}%</p>
+            ) : (
+                <Button
+                      label="Computer Analysis"
+                      onClick={async () => mutateAsync({ gameId: game.id })}
+                      className="rounded-none p-5!"
+                      loading={isPending}
+                      variant="outline"
+                />
+            )}
 
         <History
               moves={moves}
               moveIndex={moveIndex}
+              evalution={game.evaluation}
               onNavigate={(i) => {
                   if (onNavigate) onNavigate(i);
                   else setMoveIndex?.(i);

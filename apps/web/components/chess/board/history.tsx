@@ -1,3 +1,4 @@
+import { Evaluation } from "@makora/db";
 import type { Dispatch, SetStateAction } from "react";
 
 interface HistoryProps {
@@ -5,9 +6,24 @@ interface HistoryProps {
     moveIndex: number;
     setMoveIndex?: Dispatch<SetStateAction<number>>;
     onNavigate?: (index: number) => void;
+    evalution?: Evaluation
 }
 
-export const History = ({ moves, moveIndex, setMoveIndex, onNavigate }: HistoryProps) => {
+export const History = ({ moves, moveIndex, setMoveIndex, onNavigate, evalution }: HistoryProps) => {
+    const getAnnotation = (winDrop: number): string => {
+        if (winDrop >= 20) return "??";
+        if (winDrop >= 10) return "?";
+        if (winDrop >= 5) return "?!";
+        return "";
+    };
+
+    const getAnnotationColor = (annotation: string): string => {
+        if (annotation === "??") return "text-red-400";
+        if (annotation === "?") return "text-orange-400";
+        if (annotation === "?!") return "text-yellow-400";
+        return "";
+    };
+
     // Group moves into white/black pairs
     const pairs: {
         moveNumber: number;
@@ -28,21 +44,29 @@ export const History = ({ moves, moveIndex, setMoveIndex, onNavigate }: HistoryP
     }
 
     return (
-        <div className="grow overflow-scroll flex flex-col p-5 gap-5">
+        <div className="grow overflow-scroll flex flex-col">
             {pairs.map(({ moveNumber, white, whiteIndex, black, blackIndex }) => {
                 const whiteSelected = moveIndex === whiteIndex + 1;
                 const blackSelected = moveIndex === blackIndex + 1;
+                const whiteWinDrop = evalution?.results ? (evalution.results as any[])[whiteIndex]?.winDrop : undefined;
+                const blackWinDrop = evalution?.results ? (evalution.results as any[])[blackIndex]?.winDrop : undefined;
+                const whiteEval = evalution?.results ? (evalution.results as any[])[whiteIndex]?.postMoveEval : undefined;
+                const blackEval = evalution?.results ? (evalution.results as any[])[blackIndex]?.postMoveEval : undefined;
+
                 return (
-                    <div key={`move-${moveNumber}`} className="grid grid-cols-5">
-                        <div className="text-left text-zinc-500">{moveNumber}.</div>
+                    <div key={`move-${moveNumber}`} className="grid grid-cols-[auto_1fr_1fr]">
+                        <div className="text-left text-zinc-400 p-3">{moveNumber}.</div>
                         <button
                             type="button"
                             onClick={() => {
                                 if (onNavigate) onNavigate(whiteIndex + 1);
                                 else setMoveIndex?.(whiteIndex + 1);
                             }}
-                            className={`text-left ${whiteSelected ? "text-white" : "hover:text-white text-zinc-400"} cursor-pointer col-span-2`}>
-                            {white}
+                            className={`p-3 ${whiteSelected && "text-white bg-zinc-800"} text-white cursor-pointer transition duration-100`}>
+                            <div className="flex justify-between">
+                                <span className={whiteWinDrop ? getAnnotationColor(getAnnotation(whiteWinDrop)) : ""}>{white}{whiteWinDrop ? getAnnotation(whiteWinDrop) : ""}</span>
+                                <span>{whiteEval}</span>
+                            </div>
                         </button>
                         {typeof black !== "undefined" ? (
                             <button
@@ -51,8 +75,11 @@ export const History = ({ moves, moveIndex, setMoveIndex, onNavigate }: HistoryP
                                     if (onNavigate) onNavigate(blackIndex + 1);
                                     else setMoveIndex?.(blackIndex + 1);
                                 }}
-                                className={`text-left ${blackSelected ? "text-white" : "hover:text-white text-zinc-400"} cursor-pointer col-span-2`}>
-                                {black}
+                                className={`p-3 ${blackSelected && "text-white bg-zinc-800"} text-white cursor-pointer transition duration-100`}>
+                                <div className="flex justify-between">
+                                    <span className={blackWinDrop ? getAnnotationColor(getAnnotation(blackWinDrop)) : ""}>{black}{blackWinDrop ? getAnnotation(blackWinDrop) : ""}</span>
+                                    <span>{blackEval}</span>
+                                </div>
                             </button>
                         ) : (
                             <div />
