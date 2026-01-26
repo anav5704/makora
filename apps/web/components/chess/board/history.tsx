@@ -1,15 +1,27 @@
-import { Evaluation } from "@makora/db";
+import type { Evaluation } from "@makora/db";
 import type { Dispatch, SetStateAction } from "react";
+import { useEffect, useRef } from "react";
 
 interface HistoryProps {
     moves: string[];
     moveIndex: number;
     setMoveIndex?: Dispatch<SetStateAction<number>>;
     onNavigate?: (index: number) => void;
-    evalution?: Evaluation
+    evalution?: Evaluation;
 }
 
 export const History = ({ moves, moveIndex, setMoveIndex, onNavigate, evalution }: HistoryProps) => {
+    const selectedMoveRef = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+        if (selectedMoveRef.current) {
+            selectedMoveRef.current.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+            });
+        }
+    }, [moveIndex]);
+
     const getAnnotation = (winDrop: number): string => {
         if (winDrop >= 20) return "??";
         if (winDrop >= 10) return "?";
@@ -24,7 +36,6 @@ export const History = ({ moves, moveIndex, setMoveIndex, onNavigate, evalution 
         return "";
     };
 
-    // Group moves into white/black pairs
     const pairs: {
         moveNumber: number;
         white: string | undefined;
@@ -50,13 +61,18 @@ export const History = ({ moves, moveIndex, setMoveIndex, onNavigate, evalution 
                 const blackSelected = moveIndex === blackIndex + 1;
                 const whiteWinDrop = evalution?.results ? (evalution.results as any[])[whiteIndex]?.winDrop : undefined;
                 const blackWinDrop = evalution?.results ? (evalution.results as any[])[blackIndex]?.winDrop : undefined;
-                const whiteEval = evalution?.results ? (evalution.results as any[])[whiteIndex]?.postMoveEval : undefined;
-                const blackEval = evalution?.results ? (evalution.results as any[])[blackIndex]?.postMoveEval : undefined;
+                const whiteEval = evalution?.results
+                    ? (evalution.results as any[])[whiteIndex]?.postMoveEval
+                    : undefined;
+                const blackEval = evalution?.results
+                    ? (evalution.results as any[])[blackIndex]?.postMoveEval
+                    : undefined;
 
                 return (
                     <div key={`move-${moveNumber}`} className="grid grid-cols-[auto_1fr_1fr]">
-                        <div className="text-left text-zinc-400 p-3">{moveNumber}.</div>
+                        <div className="text-left text-zinc-400 text-sm p-3">{moveNumber}.</div>
                         <button
+                            ref={whiteSelected ? selectedMoveRef : null}
                             type="button"
                             onClick={() => {
                                 if (onNavigate) onNavigate(whiteIndex + 1);
@@ -64,12 +80,15 @@ export const History = ({ moves, moveIndex, setMoveIndex, onNavigate, evalution 
                             }}
                             className={`p-3 ${whiteSelected && "text-white bg-zinc-800"} text-white cursor-pointer transition duration-100`}>
                             <div className="flex justify-between">
-                                <span className={whiteWinDrop ? getAnnotationColor(getAnnotation(whiteWinDrop)) : ""}>{white}{whiteWinDrop ? getAnnotation(whiteWinDrop) : ""}</span>
-                                <span>{whiteEval}</span>
+                                <span className={whiteWinDrop ? getAnnotationColor(getAnnotation(whiteWinDrop)) : ""}>
+                                    {white}{whiteWinDrop ? getAnnotation(whiteWinDrop) : ""}
+                                </span>
+                                <span className="text-zinc-400 text-sm">{whiteEval}</span>
                             </div>
                         </button>
                         {typeof black !== "undefined" ? (
                             <button
+                                ref={blackSelected ? selectedMoveRef : null}
                                 type="button"
                                 onClick={() => {
                                     if (onNavigate) onNavigate(blackIndex + 1);
@@ -77,8 +96,11 @@ export const History = ({ moves, moveIndex, setMoveIndex, onNavigate, evalution 
                                 }}
                                 className={`p-3 ${blackSelected && "text-white bg-zinc-800"} text-white cursor-pointer transition duration-100`}>
                                 <div className="flex justify-between">
-                                    <span className={blackWinDrop ? getAnnotationColor(getAnnotation(blackWinDrop)) : ""}>{black}{blackWinDrop ? getAnnotation(blackWinDrop) : ""}</span>
-                                    <span>{blackEval}</span>
+                                    <span
+                                        className={blackWinDrop ? getAnnotationColor(getAnnotation(blackWinDrop)) : ""}>
+                                        {black}{blackWinDrop ? getAnnotation(blackWinDrop) : ""}
+                                    </span>
+                                    <span className="text-zinc-400 text-sm">{blackEval}</span>
                                 </div>
                             </button>
                         ) : (

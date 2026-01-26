@@ -24,7 +24,7 @@ export const Button = ({ label, loading, variant, className, onClick }: ButonPro
 
     return (
         <Root
-          className={`${variantStyle} ${className} px-4 py-2.5 rounded-md w-full cusor-pointer disabled:cursor-not-allowed disabled:opacity-50`}
+          className={`${variantStyle} ${className} px-4 py-2.5 rounded-md w-full cusor-pointer disabled:cursor-not-allowed!`}
             onClick={onClick}
             disabled={loading}>
             {loading ? <LoaderCircle size={24} className="animate-spin mx-auto" /> : <p>{label}</p>}

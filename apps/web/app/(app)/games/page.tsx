@@ -69,9 +69,9 @@ export default function DashboardPage() {
                         {/*{view === "list" && (*/}
                           <p className="p-5 text-sm uppercase font-bold grid grid-cols-8 border-none">
                               <span className="col-span-4">Opening</span>
+                              <span className="col-span-1">Accuracy</span>
                               <span className="col-span-1">Phase</span>
                               <span className="col-span-1">Termination</span>
-                              <span className="col-span-1">Moves</span>
                               <span className="col-span-1">Played</span>
                           </p>
                         {/*)}*/}

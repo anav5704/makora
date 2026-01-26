@@ -1,4 +1,4 @@
-FROM node:22-alpine AS builder
+FROM node:22-slim AS builder
 
 RUN npm install -g pnpm
 
@@ -20,13 +20,15 @@ RUN pnpm db:generate
 
 RUN pnpm -r build
 
-FROM node:22-alpine AS runner
+FROM node:22-slim AS runner
 
 WORKDIR /app
 
 COPY --from=builder /app/apps/web/.next/standalone ./
 COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=builder /app/apps/web/public ./apps/web/public
+
+RUN apt install stockfish
 
 EXPOSE 3000
 

@@ -6,7 +6,7 @@ import { Controls } from "@/components/chess/board/controls";
 import { History } from "@/components/chess/board/history";
 import { Details } from "@/components/chess/board/sidebar/details";
 import { useMutation } from "@tanstack/react-query";
-import { api } from "@/lib/trpc";
+import { api, queryClient } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 
 interface GameControlsProps {
@@ -26,7 +26,14 @@ export const GameControls = ({
     setMoveIndex,
     onNavigate,
 }: GameControlsProps) => {
-  const { mutateAsync, isPending } = useMutation(api.chess.analyzeGame.mutationOptions())
+  const { mutateAsync, isPending } = useMutation(
+    api.chess.analyzeGame.mutationOptions({
+             onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: api.chess.getGames.queryKey() });
+                queryClient.invalidateQueries({ queryKey: api.chess.getGame.queryKey() });
+            },
+      })
+  )
 
   return (
       <>
@@ -35,7 +42,7 @@ export const GameControls = ({
           <Controls positions={positions} moveIndex={moveIndex} setMoveIndex={setMoveIndex} />
 
           {game.evaluation ? (
-              <p className="p-5 text-center">Accuracy: {game.evaluation.accuracy.toFixed(2)}%</p>
+              <p className="p-5 text-center">Accuracy: {game.evaluation.accuracy}%</p>
             ) : (
                 <Button
                       label="Computer Analysis"

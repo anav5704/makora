@@ -1,6 +1,6 @@
 "use client";
 
-import type { Game, Platform } from "@makora/db";
+import type { Evaluation, Game, Platform } from "@makora/db";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { getTimeControl } from "@/utils/getTimeControl";
@@ -9,7 +9,7 @@ import { ChessCom } from "../chess/icons/chess-com";
 import { LichessOrg } from "../chess/icons/lichess-org";
 
 interface GamesListProps {
-    games: (Game & { account: { platform: Platform } })[];
+  games: (Game & { evaluation: Evaluation } & { account: { platform: Platform } })[];
 }
 
 export const GamesList = ({ games }: GamesListProps) => {
@@ -26,7 +26,7 @@ export const GamesList = ({ games }: GamesListProps) => {
                     account: { platform },
                     gamePhase,
                     termination,
-                    moveCount,
+                    evaluation,
                     date,
                 }) => {
                     // @ts-expect-error
@@ -35,7 +35,8 @@ export const GamesList = ({ games }: GamesListProps) => {
                     return (
                         <Link key={id} href={{ pathname: `/games/${id}` }}>
                             <p
-                                className={`${reviewed ? "text-zinc-400" : "text-white"} grid grid-cols-8 p-5 border-b border-zinc-800 hover:bg-zinc-800 transition`}>
+                                // className={`${reviewed ? "text-zinc-400" : "text-white"} grid grid-cols-8 p-5 border-b border-zinc-800 hover:bg-zinc-800 transition`}>
+                                className="text-white grid grid-cols-8 p-5 border-b border-zinc-800 hover:bg-zinc-800 transition">
                                 <span className="col-span-4">
                                     <span className="flex items-center gap-5">
                                         {platform === "CHESS_COM" ? <ChessCom /> : <LichessOrg />}
@@ -45,9 +46,9 @@ export const GamesList = ({ games }: GamesListProps) => {
                                         <span className="truncate">{opening}</span>
                                     </span>
                                 </span>
+                                <span className="col-span-1">{evaluation?.accuracy ? evaluation.accuracy + "%" : "-"}</span>
                                 <span className="col-span-1">{normalizeEnum(gamePhase)}</span>
                                 <span className="col-span-1">{normalizeEnum(termination)}</span>
-                                <span className="col-span-1">{moveCount}</span>
                                 <span className="col-span-1">{relativeDate(new Date(date))}</span>
                             </p>
                         </Link>

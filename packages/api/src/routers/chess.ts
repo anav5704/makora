@@ -218,6 +218,11 @@ export const chessRouter = router({
                     }),
                 },
                 include: {
+                  evaluation: {
+                    select: {
+                      accuracy: true
+                    }
+                  },
                     account: {
                         select: {
                             platform: true,
@@ -260,23 +265,33 @@ export const chessRouter = router({
             id: gameId
           },
           select: {
-            moves: true
+            moves: true,
+            color: true
           }
         })
 
       if(!game) return
 
-      const results = await getEval(game.moves)
+      const evalResult = await getEval(game.moves, game.color)
 
       await db.main.evaluation.create({
         data: {
           gameId,
-          accuracy: Math.random() * 100,
-          results: results as any
+          accuracy: evalResult.accuracy,
+          results: evalResult.results as any,
         }
       })
 
-      console.log(results)
+      await db.main.game.update({
+        where: {
+          id: gameId
+        },
+        data: {
+          reviewed: true
+        }
+      })
+
+      console.log(evalResult)
     }),
     updateNotes: protectedProcedure
     .input(
