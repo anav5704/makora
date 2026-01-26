@@ -3,7 +3,7 @@
 import { Input } from "@/components/ui/input";
 import { useQueryState } from "nuqs";
 import { useState, useEffect } from "react";
-import { SEARCH_DEBOUNCE } from "@/const"
+import { DEBOUNCE } from "@/const"
 
 export const Search = () => {
     const [search, setSearch] = useQueryState("search");
@@ -20,7 +20,7 @@ export const Search = () => {
             } else {
                 setSearch(null);
             }
-        }, SEARCH_DEBOUNCE);
+        }, DEBOUNCE);
 
         return () => clearTimeout(timer);
     }, [query, setSearch]);

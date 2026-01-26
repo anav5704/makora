@@ -18,13 +18,13 @@ export const Button = ({ label, loading, variant, className, onClick }: ButonPro
       break
     }
     case "outline":
-      variantStyle = "bg-zinc-900 text-white border border-zinc-800"
+      variantStyle = "bg-zinc-900 text-white border-zinc-800"
       break
   }
 
     return (
         <Root
-          className={`${variantStyle} ${className} px-4 py-2.5 rounded-md w-full cusor-pointer disabled:cursor-not-allowed disabled:opacity-50`}
+          className={`${variantStyle} ${className} px-4 py-2.5 rounded-md w-full cusor-pointer disabled:cursor-not-allowed!`}
             onClick={onClick}
             disabled={loading}>
             {loading ? <LoaderCircle size={24} className="animate-spin mx-auto" /> : <p>{label}</p>}

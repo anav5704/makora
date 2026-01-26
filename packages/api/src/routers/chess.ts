@@ -2,9 +2,10 @@
 import { Color, db, GamePhase, Platform, Termination, TimeControl } from "@makora/db";
 import { Chess } from "chess.js";
 import { z } from "zod";
-import { type ParsedPgn, parsePgn } from "../../lib/chess";
+import { type ParsedPgn, parsePgn } from "../../lib/parsePgn";
 import { protectedProcedure, router } from "../index";
 import { PAGE_SIZE } from "../../const"
+import { getEval } from "../../lib/getEval";
 
 export const chessRouter = router({
     syncGames: protectedProcedure.mutation(async ({ ctx }) => {
@@ -75,11 +76,6 @@ export const chessRouter = router({
                         data: {
                             accountId: id,
                             ...game,
-                            evaluation: {
-                                create: {
-                                    accuracy: Math.random() * 100,
-                                },
-                            },
                         },
                     });
                 }
@@ -130,11 +126,6 @@ export const chessRouter = router({
                                 data: {
                                     accountId: id,
                                     ...game,
-                                    evaluation: {
-                                        create: {
-                                            accuracy: Math.random() * 100,
-                                        },
-                                    },
                                 },
                             });
                         }
@@ -162,7 +153,10 @@ export const chessRouter = router({
             const game = await db.main.game.findUnique({
                 where: {
                     id: input.id,
-                },
+              },
+              include: {
+                evaluation: true
+              }
             });
 
             if (!game) return;
@@ -224,6 +218,11 @@ export const chessRouter = router({
                     }),
                 },
                 include: {
+                  evaluation: {
+                    select: {
+                      accuracy: true
+                    }
+                  },
                     account: {
                         select: {
                             platform: true,
@@ -246,4 +245,69 @@ export const chessRouter = router({
               cursor: games.length === PAGE_SIZE ? games.at(-1)?.id : undefined
             };
         }),
+  analyzeGame: protectedProcedure
+    .input(
+      z.object({
+        gameId: z.string()
+      })
+    )
+    .mutation(async ({ input: { gameId } }) => {
+      const evaluation = await db.main.evaluation.findUnique({
+        where: {
+          gameId
+        }
+      })
+
+      if (evaluation) return
+
+      const game = await db.main.game.findUnique({
+          where: {
+            id: gameId
+          },
+          select: {
+            moves: true,
+            color: true
+          }
+        })
+
+      if(!game) return
+
+      const evalResult = await getEval(game.moves, game.color)
+
+      await db.main.evaluation.create({
+        data: {
+          gameId,
+          accuracy: evalResult.accuracy,
+          results: evalResult.results as any,
+        }
+      })
+
+      await db.main.game.update({
+        where: {
+          id: gameId
+        },
+        data: {
+          reviewed: true
+        }
+      })
+
+      console.log(evalResult)
+    }),
+    updateNotes: protectedProcedure
+    .input(
+      z.object({
+        gameId: z.string(),
+        notes: z.string()
+      })
+    )
+    .mutation(async ({ input }) => {
+      await db.main.game.update({
+        where: {
+          id: input.gameId,
+        },
+        data: {
+          notes: input.notes
+        }
+        })
+    })
 });

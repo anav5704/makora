@@ -8,15 +8,16 @@ import type { Color } from "@lichess-org/chessground/types";
 import { useEffect, useRef, useState } from "react";
 
 interface BoardProps {
-    size: number;
+    size: string;
     fen: string;
     orientation: Color;
     onChangeFen?: (fen: string) => void;
     onApiReady?: (api: Api) => void;
+    onWheel?: (e: React.WheelEvent<HTMLDivElement>) => void;
     config?: Partial<Config>;
 }
 
-export const Core = ({ size, fen, orientation, onChangeFen, onApiReady, config }: BoardProps) => {
+export const Core = ({ size, fen, orientation, onChangeFen, onApiReady, onWheel, config }: BoardProps) => {
     const ref = useRef<HTMLDivElement | null>(null);
     const [api, setApi] = useState<Api | null>(null);
 
@@ -77,9 +78,10 @@ export const Core = ({ size, fen, orientation, onChangeFen, onApiReady, config }
     return (
         <div
             ref={ref}
+            onWheel={onWheel}
             style={{
                 aspectRatio: 1,
-                width: size
+                width: size,
             }}
         />
     );

@@ -1,0 +1,67 @@
+"use client";
+
+import type { Game, Evaluation } from "@makora/db";
+import type { Dispatch, SetStateAction } from "react";
+import { Controls } from "@/components/chess/board/controls";
+import { History } from "@/components/chess/board/history";
+import { Details } from "@/components/chess/board/sidebar/details";
+import { useMutation } from "@tanstack/react-query";
+import { api, queryClient } from "@/lib/trpc";
+import { Button } from "@/components/ui/button";
+
+interface GameControlsProps {
+    game: Game & { evaluation: Evaluation };
+    positions?: string[];
+    moves?: string[];
+    moveIndex?: number;
+    setMoveIndex?: Dispatch<SetStateAction<number>>;
+    onNavigate?: (index: number) => void;
+}
+
+export const GameControls = ({
+    game,
+    positions = [],
+    moves = [],
+    moveIndex = 0,
+    setMoveIndex,
+    onNavigate,
+}: GameControlsProps) => {
+  const { mutateAsync, isPending } = useMutation(
+    api.chess.analyzeGame.mutationOptions({
+             onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: api.chess.getGames.queryKey() });
+                queryClient.invalidateQueries({ queryKey: api.chess.getGame.queryKey() });
+            },
+      })
+  )
+
+  return (
+      <>
+          <Details game={game} />
+
+          <Controls positions={positions} moveIndex={moveIndex} setMoveIndex={setMoveIndex} />
+
+          {game.evaluation ? (
+              <p className="p-5 text-center">Accuracy: {game.evaluation.accuracy}%</p>
+            ) : (
+                <Button
+                      label="Computer Analysis"
+                      onClick={async () => mutateAsync({ gameId: game.id })}
+                      className="rounded-none p-5!"
+                      loading={isPending}
+                      variant="outline"
+                />
+            )}
+
+        <History
+              moves={moves}
+              moveIndex={moveIndex}
+              evalution={game.evaluation}
+              onNavigate={(i) => {
+                  if (onNavigate) onNavigate(i);
+                  else setMoveIndex?.(i);
+              }}
+          />
+      </>
+    );
+};

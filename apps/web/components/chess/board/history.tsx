@@ -1,14 +1,41 @@
+import type { Evaluation } from "@makora/db";
 import type { Dispatch, SetStateAction } from "react";
+import { useEffect, useRef } from "react";
 
 interface HistoryProps {
     moves: string[];
     moveIndex: number;
     setMoveIndex?: Dispatch<SetStateAction<number>>;
     onNavigate?: (index: number) => void;
+    evalution?: Evaluation;
 }
 
-export const History = ({ moves, moveIndex, setMoveIndex, onNavigate }: HistoryProps) => {
-    // Group moves into white/black pairs
+export const History = ({ moves, moveIndex, setMoveIndex, onNavigate, evalution }: HistoryProps) => {
+    const selectedMoveRef = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+        if (selectedMoveRef.current) {
+            selectedMoveRef.current.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+            });
+        }
+    }, [moveIndex]);
+
+    const getAnnotation = (winDrop: number): string => {
+        if (winDrop >= 20) return "??";
+        if (winDrop >= 10) return "?";
+        if (winDrop >= 5) return "?!";
+        return "";
+    };
+
+    const getAnnotationColor = (annotation: string): string => {
+        if (annotation === "??") return "text-red-400";
+        if (annotation === "?") return "text-orange-400";
+        if (annotation === "?!") return "text-yellow-400";
+        return "";
+    };
+
     const pairs: {
         moveNumber: number;
         white: string | undefined;
@@ -28,40 +55,60 @@ export const History = ({ moves, moveIndex, setMoveIndex, onNavigate }: HistoryP
     }
 
     return (
-        <nav className="grow overflow-scroll p-5 w-72">
-            <div className="flex flex-col gap-5">
-                {pairs.map(({ moveNumber, white, whiteIndex, black, blackIndex }) => {
-                    const whiteSelected = moveIndex === whiteIndex + 1;
-                    const blackSelected = moveIndex === blackIndex + 1;
-                    return (
-                        <div key={`move-${moveNumber}`} className="grid grid-cols-5">
-                            <div className="text-left text-zinc-500">{moveNumber}.</div>
+        <div className="grow overflow-scroll flex flex-col">
+            {pairs.map(({ moveNumber, white, whiteIndex, black, blackIndex }) => {
+                const whiteSelected = moveIndex === whiteIndex + 1;
+                const blackSelected = moveIndex === blackIndex + 1;
+                const whiteWinDrop = evalution?.results ? (evalution.results as any[])[whiteIndex]?.winDrop : undefined;
+                const blackWinDrop = evalution?.results ? (evalution.results as any[])[blackIndex]?.winDrop : undefined;
+                const whiteEval = evalution?.results
+                    ? (evalution.results as any[])[whiteIndex]?.postMoveEval
+                    : undefined;
+                const blackEval = evalution?.results
+                    ? (evalution.results as any[])[blackIndex]?.postMoveEval
+                    : undefined;
+
+                return (
+                    <div key={`move-${moveNumber}`} className="grid grid-cols-[auto_1fr_1fr]">
+                        <div className="text-left text-zinc-400 text-sm p-3">{moveNumber}.</div>
+                        <button
+                            ref={whiteSelected ? selectedMoveRef : null}
+                            type="button"
+                            onClick={() => {
+                                if (onNavigate) onNavigate(whiteIndex + 1);
+                                else setMoveIndex?.(whiteIndex + 1);
+                            }}
+                            className={`p-3 ${whiteSelected && "text-white bg-zinc-800"} text-white cursor-pointer transition duration-100`}>
+                            <div className="flex justify-between">
+                                <span className={whiteWinDrop ? getAnnotationColor(getAnnotation(whiteWinDrop)) : ""}>
+                                    {white}{whiteWinDrop ? getAnnotation(whiteWinDrop) : ""}
+                                </span>
+                                <span className="text-zinc-400 text-sm">{whiteEval}</span>
+                            </div>
+                        </button>
+                        {typeof black !== "undefined" ? (
                             <button
+                                ref={blackSelected ? selectedMoveRef : null}
                                 type="button"
                                 onClick={() => {
-                                    if (onNavigate) onNavigate(whiteIndex + 1);
-                                    else setMoveIndex?.(whiteIndex + 1);
+                                    if (onNavigate) onNavigate(blackIndex + 1);
+                                    else setMoveIndex?.(blackIndex + 1);
                                 }}
-                                className={`text-left ${whiteSelected ? "text-white" : "hover:text-white text-zinc-400"} cursor-pointer col-span-2`}>
-                                {white}
+                                className={`p-3 ${blackSelected && "text-white bg-zinc-800"} text-white cursor-pointer transition duration-100`}>
+                                <div className="flex justify-between">
+                                    <span
+                                        className={blackWinDrop ? getAnnotationColor(getAnnotation(blackWinDrop)) : ""}>
+                                        {black}{blackWinDrop ? getAnnotation(blackWinDrop) : ""}
+                                    </span>
+                                    <span className="text-zinc-400 text-sm">{blackEval}</span>
+                                </div>
                             </button>
-                            {typeof black !== "undefined" ? (
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        if (onNavigate) onNavigate(blackIndex + 1);
-                                        else setMoveIndex?.(blackIndex + 1);
-                                    }}
-                                    className={`text-left ${blackSelected ? "text-white" : "hover:text-white text-zinc-400"} cursor-pointer col-span-2`}>
-                                    {black}
-                                </button>
-                            ) : (
-                                <div />
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
-        </nav>
+                        ) : (
+                            <div />
+                        )}
+                    </div>
+                );
+            })}
+        </div>
     );
 };

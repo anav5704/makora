@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
-import { type Dispatch, type SetStateAction, useCallback } from "react";
+import { type Dispatch, type SetStateAction, useCallback, useEffect } from "react";
 
 interface ControlsProps {
     positions?: string[];
@@ -17,22 +17,58 @@ export const Controls = ({ positions = [], moveIndex = 0, onNavigate, setMoveInd
     }, [onNavigate, setMoveIndex]);
 
     const goPrev = useCallback(() => {
-        const next = moveIndex - 1;
-        onNavigate?.(next);
-        setMoveIndex?.((prev: number) => prev - 1);
+        if (moveIndex > 0) {
+            const next = moveIndex - 1;
+            onNavigate?.(next);
+            setMoveIndex?.((prev: number) => prev - 1);
+        }
     }, [onNavigate, setMoveIndex, moveIndex]);
 
     const goNext = useCallback(() => {
-        const next = moveIndex + 1;
-        onNavigate?.(next);
-        setMoveIndex?.((prev: number) => prev + 1);
-    }, [onNavigate, setMoveIndex, moveIndex]);
+        if (moveIndex < positions.length - 1) {
+            const next = moveIndex + 1;
+            onNavigate?.(next);
+            setMoveIndex?.((prev: number) => prev + 1);
+        }
+    }, [onNavigate, setMoveIndex, moveIndex, positions]);
 
     const goEnd = useCallback(() => {
         const endIndex = positions.length - 1;
         onNavigate?.(endIndex);
         setMoveIndex?.(() => endIndex);
     }, [onNavigate, setMoveIndex, positions.length]);
+
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            switch (event.key) {
+                case "ArrowRight":
+                case " ":
+                case "d":
+                case "D":
+                    goNext();
+                    break;
+                case "ArrowLeft":
+                case "a":
+                case "A":
+                    goPrev();
+                    break;
+                case "ArrowUp":
+                case "w":
+                case "W":
+                    goStart();
+                    break;
+                case "ArrowDown":
+                case "s":
+                case "S":
+                    goEnd();
+                    break;
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [goNext, goPrev, goStart, goEnd]);
 
     return (
         <div className="flex">
