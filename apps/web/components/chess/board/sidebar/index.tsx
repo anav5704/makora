@@ -52,6 +52,7 @@ export const Sidebar = ({
              <Activity mode={activeTab === 'game' ? 'visible' : 'hidden'}>
                <div className="h-full flex flex-col justify-end divide-y divide-zinc-800 overflow-scroll">
                  <GameControls
+                        // @ts-expect-error
                          game={game}
                          positions={positions}
                          moves={moves}

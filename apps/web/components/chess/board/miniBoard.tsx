@@ -14,7 +14,7 @@ export const MiniBoard = ({ moves, orientation }: MiniBoardProps) => {
 
     return (
         <div className="grow h-full grid place-content-center">
-          <Core size={350} onChangeFen={() => {}} orientation={orientation} fen={fen} />
+          <Core size="10vh" onChangeFen={() => {}} orientation={orientation} fen={fen} />
         </div>
     );
 };
