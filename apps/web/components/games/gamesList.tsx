@@ -20,7 +20,7 @@ export const GamesList = ({ games }: GamesListProps) => {
             {games?.map(
                 ({
                     id,
-                    reviewed,
+                    // reviewed,
                     timeControl,
                     opening,
                     account: { platform },
