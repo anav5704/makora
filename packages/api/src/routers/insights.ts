@@ -82,35 +82,27 @@ export const insightsRouter = router({
             },
         });
 
-        // Group games by week
-        const gamesByWeek = new Map<string, typeof games>();
+        // Group games by day
+        const gamesByDay = new Map<string, typeof games>();
 
         games.forEach((game) => {
             const date = new Date(game.date);
-            // Get the start of the week (Sunday)
-            const weekStart = new Date(date);
-            weekStart.setDate(date.getDate() - date.getDay());
-            weekStart.setHours(0, 0, 0, 0);
+            const dayKey = date.toISOString().split("T")[0] as string;
 
-            const weekKey = weekStart.toISOString().split("T")[0] as string;
-
-            if (!gamesByWeek.has(weekKey)) {
-                gamesByWeek.set(weekKey, []);
+            if (!gamesByDay.has(dayKey)) {
+                gamesByDay.set(dayKey, []);
             }
-            const weekGames = gamesByWeek.get(weekKey);
-            if (weekGames) {
-                weekGames.push(game);
+            const dayGames = gamesByDay.get(dayKey);
+            if (dayGames) {
+                dayGames.push(game);
             }
         });
 
-        // Calculate cumulative losses and average accuracy per week
-        let cumulativeLosses = 0;
-        const data = Array.from(gamesByWeek.entries())
+        // Calculate losses and average accuracy per day
+        const data = Array.from(gamesByDay.entries())
             .sort(([a], [b]) => a.localeCompare(b))
-            .map(([weekKey, weekGames]) => {
-                cumulativeLosses += weekGames.length;
-
-                const gamesWithEvaluation = weekGames.filter((game) => game.evaluation !== null);
+            .map(([dayKey, dayGames]) => {
+                const gamesWithEvaluation = dayGames.filter((game) => game.evaluation !== null);
                 const totalAccuracy = gamesWithEvaluation.reduce(
                     (sum, game) => sum + (game.evaluation?.accuracy || 0),
                     0,
@@ -121,8 +113,8 @@ export const insightsRouter = router({
                         : 0;
 
                 return {
-                    date: weekKey,
-                    losses: cumulativeLosses,
+                    date: dayKey,
+                    losses: dayGames.length,
                     accuracy: averageAccuracy,
                 };
             });
