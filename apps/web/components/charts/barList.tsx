@@ -19,8 +19,8 @@ export function BarList({ title, data }: BarListProps) {
                     <XAxis dataKey="value" type="number" hide />
 
                     <Bar dataKey="value" fill="#27272a" radius={5}>
-                        <LabelList dataKey="name" position="insideLeft" offset={15} className="fill-white truncate" />
-                        <LabelList dataKey="value" position="insideRight" offset={15} className="fill-white" />
+                        <LabelList dataKey="name" position="insideLeft" offset={15} className="fill-white" />
+                        <LabelList dataKey="value" position="right" offset={15} className="fill-white" />
                     </Bar>
                 </BarChart>
             </ResponsiveContainer>

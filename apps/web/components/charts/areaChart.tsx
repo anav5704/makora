@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Area, AreaChart as AreaChartCore, ResponsiveContainer, Tooltip } from "recharts";
+import { AnimatePresence, motion } from "framer-motion";
 
 export const description = "A simple area chart";
 
@@ -54,12 +55,19 @@ export function AreaChart({ title, data, xKey, yKey, unit }: AreaChartProps) {
         <div className="p-5">
             <div className="flex justify-between items-center mb-3">
                 <p>{title}</p>
-                {activeData && (
-                    <span>
-                        {activeData.y}
-                        {unit} @ {activeData.x}
-                    </span>
-                )}
+                <AnimatePresence>
+                    {activeData && (
+                        <motion.span
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.1 }}
+                        >
+                            {activeData.y}
+                            {unit} · {activeData.x}
+                        </motion.span>
+                    )}
+                </AnimatePresence>
             </div>
             <ResponsiveContainer width="100%" height={350}>
                 <AreaChartCore accessibilityLayer data={data}>
