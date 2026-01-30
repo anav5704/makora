@@ -23,7 +23,7 @@ export default function SettingsPage() {
                     </section>
                 </header>
 
-            <section className="grid grid-cols-4 p-5">
+            <section className="grid grid-cols-4 p-5 gap-5">
               {data?.map((account) => (
                   // @ts-expect-error
                   <AccountCard key={account.id} account={account} />
