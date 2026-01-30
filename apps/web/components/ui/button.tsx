@@ -4,7 +4,7 @@ import { LoaderCircle } from "lucide-react";
 interface ButonProps {
     label: string;
     loading: boolean;
-    variant: "solid" | "outline";
+    variant: "solid" | "outline" | "danger";
     className?: string;
     onClick: () => void;
 }
@@ -19,6 +19,9 @@ export const Button = ({ label, loading, variant, className, onClick }: ButonPro
     }
     case "outline":
       variantStyle = "bg-zinc-900 text-white border-zinc-800"
+      break
+    case "danger":
+      variantStyle = "bg-rose-500 text-zinc-900"
       break
   }
 
