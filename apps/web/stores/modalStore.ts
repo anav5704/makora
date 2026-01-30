@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type ModalName = "filterGame" | null;
+export type ModalName = "filterGame" | "addAccount" | null;
 
 interface ModalState {
     activeModal: ModalName;
