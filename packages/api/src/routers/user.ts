@@ -65,4 +65,42 @@ export const userRouter = router({
         },
       });
     }),
+  updateAccount: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        platform: z.enum([Platform.CHESS_COM, Platform.LICHESS_ORG]),
+        username: z.string().min(2),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const userId = ctx.session.user.id;
+
+      await db.main.chessAccount.update({
+        where: {
+          id: input.id,
+          userId,
+        },
+        data: {
+          platform: input.platform,
+          username: input.username,
+        },
+      });
+    }),
+  deleteAccount: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const userId = ctx.session.user.id;
+
+      await db.main.chessAccount.delete({
+        where: {
+          id: input.id,
+          userId,
+        },
+      });
+    }),
 });
