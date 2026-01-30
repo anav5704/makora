@@ -30,4 +30,21 @@ export const userRouter = router({
                 },
             });
         }),
+  getAccounts: protectedProcedure
+    .query(async ({ ctx }) => {
+      const accounts = await db.main.chessAccount.findMany({
+          where: {
+              userId: ctx.session.user.id
+          },
+          include: {
+              _count: {
+                  select: {
+                      games: true
+                  }
+              }
+          }
+      })
+
+      return accounts
+    })
 });
