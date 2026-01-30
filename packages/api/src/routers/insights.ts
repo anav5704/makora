@@ -1,13 +1,45 @@
 import { db } from "@makora/db";
+import { z } from "zod";
 import { protectedProcedure, router } from "../index";
 
+const dateRangeSchema = z.object({
+    range: z.enum(["week", "month", "3months", "6months", "year", "all"]).default("week"),
+});
+
+const getDateFilter = (range: string): Date | undefined => {
+    const now = new Date();
+
+    switch (range) {
+        case "week":
+            return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        case "month":
+            return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        case "3months":
+            return new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        case "6months":
+            return new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
+        case "year":
+            return new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        case "all":
+        default:
+            return undefined;
+    }
+};
+
 export const insightsRouter = router({
-    getMetrics: protectedProcedure.query(async ({ ctx }) => {
+    getMetrics: protectedProcedure.input(dateRangeSchema).query(async ({ ctx, input }) => {
+        const dateFilter = getDateFilter(input.range);
+
         const games = await db.main.game.findMany({
             where: {
                 account: {
                     userId: ctx.session.user.id,
                 },
+                ...(dateFilter && {
+                    date: {
+                        gte: dateFilter,
+                    },
+                }),
             },
             include: {
                 evaluation: true,
@@ -28,12 +60,19 @@ export const insightsRouter = router({
 
         return { totalLosses, reviewedLosses, averageMoves, averageAccuracy };
     }),
-    getOverTime: protectedProcedure.query(async ({ ctx }) => {
+    getOverTime: protectedProcedure.input(dateRangeSchema).query(async ({ ctx, input }) => {
+        const dateFilter = getDateFilter(input.range);
+
         const games = await db.main.game.findMany({
             where: {
                 account: {
                     userId: ctx.session.user.id,
                 },
+                ...(dateFilter && {
+                    date: {
+                        gte: dateFilter,
+                    },
+                }),
             },
             include: {
                 evaluation: true,
@@ -43,35 +82,27 @@ export const insightsRouter = router({
             },
         });
 
-        // Group games by week
-        const gamesByWeek = new Map<string, typeof games>();
+        // Group games by day
+        const gamesByDay = new Map<string, typeof games>();
 
         games.forEach((game) => {
             const date = new Date(game.date);
-            // Get the start of the week (Sunday)
-            const weekStart = new Date(date);
-            weekStart.setDate(date.getDate() - date.getDay());
-            weekStart.setHours(0, 0, 0, 0);
+            const dayKey = date.toISOString().split("T")[0] as string;
 
-            const weekKey = weekStart.toISOString().split("T")[0] as string;
-
-            if (!gamesByWeek.has(weekKey)) {
-                gamesByWeek.set(weekKey, []);
+            if (!gamesByDay.has(dayKey)) {
+                gamesByDay.set(dayKey, []);
             }
-            const weekGames = gamesByWeek.get(weekKey);
-            if (weekGames) {
-                weekGames.push(game);
+            const dayGames = gamesByDay.get(dayKey);
+            if (dayGames) {
+                dayGames.push(game);
             }
         });
 
-        // Calculate cumulative losses and average accuracy per week
-        let cumulativeLosses = 0;
-        const data = Array.from(gamesByWeek.entries())
+        // Calculate losses and average accuracy per day
+        const data = Array.from(gamesByDay.entries())
             .sort(([a], [b]) => a.localeCompare(b))
-            .map(([weekKey, weekGames]) => {
-                cumulativeLosses += weekGames.length;
-
-                const gamesWithEvaluation = weekGames.filter((game) => game.evaluation !== null);
+            .map(([dayKey, dayGames]) => {
+                const gamesWithEvaluation = dayGames.filter((game) => game.evaluation !== null);
                 const totalAccuracy = gamesWithEvaluation.reduce(
                     (sum, game) => sum + (game.evaluation?.accuracy || 0),
                     0,
@@ -82,20 +113,27 @@ export const insightsRouter = router({
                         : 0;
 
                 return {
-                    date: weekKey,
-                    losses: cumulativeLosses,
+                    date: dayKey,
+                    losses: dayGames.length,
                     accuracy: averageAccuracy,
                 };
             });
 
         return data;
     }),
-    getComparison: protectedProcedure.query(async ({ ctx }) => {
+    getComparison: protectedProcedure.input(dateRangeSchema).query(async ({ ctx, input }) => {
+        const dateFilter = getDateFilter(input.range);
+
         const games = await db.main.game.findMany({
             where: {
                 account: {
                     userId: ctx.session.user.id,
                 },
+                ...(dateFilter && {
+                    date: {
+                        gte: dateFilter,
+                    },
+                }),
             },
             select: {
                 opening: true,
@@ -121,12 +159,19 @@ export const insightsRouter = router({
 
         return topOpenings;
     }),
-    getDistribution: protectedProcedure.query(async ({ ctx }) => {
+    getDistribution: protectedProcedure.input(dateRangeSchema).query(async ({ ctx, input }) => {
+        const dateFilter = getDateFilter(input.range);
+
         const games = await db.main.game.findMany({
             where: {
                 account: {
                     userId: ctx.session.user.id,
                 },
+                ...(dateFilter && {
+                    date: {
+                        gte: dateFilter,
+                    },
+                }),
             },
             select: {
                 timeControl: true,

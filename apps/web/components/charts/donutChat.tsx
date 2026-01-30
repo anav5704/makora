@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { AnimatePresence, motion } from "framer-motion";
 import { normalizeEnum } from "@/utils/normalizeEnum";
 
 interface DonutChartProps {
@@ -12,31 +13,36 @@ interface DonutChartProps {
 interface CustomTooltipProps {
     active?: boolean;
     payload?: Array<{ payload: { name: string; value: number } }>;
-    onDataChange: (data: { name: string; value: number } | null) => void;
+    total: number;
+    onDataChange: (data: { name: string; value: number; percentage: number } | null) => void;
 }
 
-function CustomTooltip({ active, payload, onDataChange }: CustomTooltipProps) {
+function CustomTooltip({ active, payload, total, onDataChange }: CustomTooltipProps) {
     useEffect(() => {
         if (active && payload && payload.length > 0) {
             const data = payload[0].payload;
+            const percentage = total > 0 ? Math.round((data.value / total) * 100) : 0;
             onDataChange({
                 name: data.name,
                 value: data.value,
+                percentage,
             });
         } else {
             onDataChange(null);
         }
-    }, [active, payload, onDataChange]);
+    }, [active, payload, total, onDataChange]);
 
     return null;
 }
 
 export function DonutChart({ title, data }: DonutChartProps) {
-    const [activeData, setActiveData] = useState<{ name: string; value: number } | null>(null);
+    const [activeData, setActiveData] = useState<{ name: string; value: number; percentage: number } | null>(null);
 
-    const handleDataChange = useCallback((data: { name: string; value: number } | null) => {
+    const handleDataChange = useCallback((data: { name: string; value: number; percentage: number } | null) => {
         setActiveData(data);
     }, []);
+
+    const total = useMemo(() => data.reduce((sum, item) => sum + item.value, 0), [data]);
 
     // Find the highest value index
     const highestValueIndex = useMemo(() => {
@@ -56,11 +62,17 @@ export function DonutChart({ title, data }: DonutChartProps) {
         <div className="p-5 col-span-1">
             <div className="flex justify-between items-center mb-5">
                 <p>{title}</p>
-                {activeData && (
-                    <span>
-                        {activeData.value} @ {normalizeEnum(activeData.name)}
-                    </span>
-                )}
+                <AnimatePresence>
+                    {activeData && (
+                        <motion.span
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.1 }}>
+                            {activeData.value} ({activeData.percentage}%) · {normalizeEnum(activeData.name)}
+                        </motion.span>
+                    )}
+                </AnimatePresence>
             </div>
             <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
@@ -69,6 +81,7 @@ export function DonutChart({ title, data }: DonutChartProps) {
                             <CustomTooltip
                                 active={active}
                                 payload={payload as Array<{ payload: { name: string; value: number } }>}
+                                total={total}
                                 onDataChange={handleDataChange}
                             />
                         )}
