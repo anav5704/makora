@@ -9,12 +9,12 @@ export const Sidebar = () => {
 
     const links = {
         top: [
-            {
-                label: "Dashboard",
-                href: "/dashboard",
-                icon: LayoutDashboard,
-                isActive: pathname === "/dashboard",
-            },
+            // {
+            //     label: "Dashboard",
+            //     href: "/dashboard",
+            //     icon: LayoutDashboard,
+            //     isActive: pathname === "/dashboard",
+            // },
             {
                 label: "Games",
                 href: "/games",

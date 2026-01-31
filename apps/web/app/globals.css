@@ -54,3 +54,7 @@ h3 {
 button {
     @apply cursor-pointer!;
 }
+
+.text-gradient-white {
+	@apply bg-linear-to-br from-white to-zinc-500 bg-clip-text text-transparent;
+}
