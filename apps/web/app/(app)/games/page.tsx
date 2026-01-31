@@ -11,7 +11,7 @@ import { useModalStore } from "@/stores/modalStore";
 import type { Color, GamePhase, Platform, Termination, TimeControl } from "@makora/db";
 // import { View } from "@/components/games/view";
 // import { GamesGrid } from "@/components/games/gamesGrid";
-export default function DashboardPage() {
+export default function GamesPage() {
     const { openModal } = useModalStore();
 
     const [search] = useQueryState("search");

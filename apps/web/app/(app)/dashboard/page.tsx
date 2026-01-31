@@ -1,3 +1,5 @@
-export default function GamesPage() {
-    return <div></div>;
+import { redirect } from "next/navigation";
+
+export default function DashboardPage() {
+    return redirect("/games");
 }
