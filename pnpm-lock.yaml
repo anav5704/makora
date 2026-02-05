@@ -63,6 +63,9 @@ importers:
       '@headlessui/react':
         specifier: ^2.2.9
         version: 2.2.9(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@hono/trpc-server':
+        specifier: ^0.4.2
+        version: 0.4.2(@trpc/server@11.6.0(typescript@5.9.3))(hono@4.11.7)
       '@lichess-org/chessground':
         specifier: ^9.9.0
         version: 9.9.0
@@ -105,6 +108,9 @@ importers:
       framer-motion:
         specifier: ^12.23.26
         version: 12.23.26(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      hono:
+        specifier: ^4.11.7
+        version: 4.11.7
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -175,9 +181,6 @@ importers:
       dotenv:
         specifier: catalog:dotenv
         version: 17.2.3
-      next:
-        specifier: 16.0.10
-        version: 16.0.10(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       typescript:
         specifier: ^5
         version: 5.9.3
@@ -406,6 +409,13 @@ packages:
     engines: {node: '>=18.14.1'}
     peerDependencies:
       hono: ^4
+
+  '@hono/trpc-server@0.4.2':
+    resolution: {integrity: sha512-3TDrc42CZLgcTFkXQba+y7JlRWRiyw1AqhLqztWyNS2IFT+3bHld0lxKdGBttCtGKHYx0505dM67RMazjhdZqw==}
+    engines: {node: '>=16.0.0'}
+    peerDependencies:
+      '@trpc/server': ^10.10.0 || >11.0.0-rc
+      hono: '>=4.0.0'
 
   '@img/colour@1.0.0':
     resolution: {integrity: sha512-A5P/LfWGFSl6nsckYtjw9da+19jB8hkJ6ACTGcDfEJ0aE+l2n2El7dsVM7UVHZQ9s2lmYMWlrS21YLy2IR1LUw==}
@@ -1361,6 +1371,10 @@ packages:
   grammex@3.1.11:
     resolution: {integrity: sha512-HNwLkgRg9SqTAd1N3Uh/MnKwTBTzwBxTOPbXQ8pb0tpwydjk90k4zRE8JUn9fMUiRwKtXFZ1TWFmms3dZHN+Fg==}
 
+  hono@4.11.7:
+    resolution: {integrity: sha512-l7qMiNee7t82bH3SeyUCt9UF15EVmaBvsppY2zQtrbIhl/yzBTny+YUxsVjSjQ6gaqaeVtZmGocom8TzBlA4Yw==}
+    engines: {node: '>=16.9.0'}
+
   hono@4.7.10:
     resolution: {integrity: sha512-QkACju9MiN59CKSY5JsGZCYmPZkA6sIW6OFCUp7qDjZu6S6KHtJHhAc9Uy9mV9F8PJ1/HQ3ybZF2yjCa/73fvQ==}
     engines: {node: '>=16.9.0'}
@@ -2226,6 +2240,11 @@ snapshots:
   '@hono/node-server@1.14.2(hono@4.7.10)':
     dependencies:
       hono: 4.7.10
+
+  '@hono/trpc-server@0.4.2(@trpc/server@11.6.0(typescript@5.9.3))(hono@4.11.7)':
+    dependencies:
+      '@trpc/server': 11.6.0(typescript@5.9.3)
+      hono: 4.11.7
 
   '@img/colour@1.0.0':
     optional: true
@@ -3134,6 +3153,8 @@ snapshots:
   graceful-fs@4.2.11: {}
 
   grammex@3.1.11: {}
+
+  hono@4.11.7: {}
 
   hono@4.7.10: {}
 

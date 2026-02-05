@@ -8,6 +8,7 @@
     },
     "dependencies": {
         "@headlessui/react": "^2.2.9",
+        "@hono/trpc-server": "^0.4.2",
         "@lichess-org/chessground": "^9.9.0",
         "@makora/api": "workspace:*",
         "@makora/auth": "workspace:*",
@@ -22,6 +23,7 @@
         "chess.js": "catalog:chess",
         "date-fns": "^4.1.0",
         "framer-motion": "^12.23.26",
+        "hono": "^4.11.7",
         "lodash": "^4.17.21",
         "lucide-react": "^0.553.0",
         "next": "catalog:next",

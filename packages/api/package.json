@@ -27,7 +27,6 @@
         "@trpc/server": "catalog:trpc",
         "chess.js": "catalog:chess",
         "dotenv": "catalog:dotenv",
-        "next": "16.0.10",
         "zod": "catalog:zod"
     }
 }

@@ -20,7 +20,7 @@ RUN pnpm db:generate
 
 RUN pnpm -r build
 
-FROM node:22-slim AS runner
+FROM oven/bun:slim AS runner
 
 WORKDIR /app
 
@@ -36,4 +36,4 @@ ENV PORT=3000
 ENV NODE_ENV=production
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "apps/web/server.js"]
+CMD ["bun", "apps/web/server.js"]
