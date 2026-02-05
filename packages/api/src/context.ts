@@ -1,9 +1,8 @@
 import { auth } from "@makora/auth";
-import type { NextRequest } from "next/server";
 
-export async function createContext(req: NextRequest) {
+export async function createContext(headers: Headers) {
     const session = await auth.api.getSession({
-        headers: req.headers,
+        headers,
     });
     return {
         session,
