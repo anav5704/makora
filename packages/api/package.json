@@ -23,6 +23,7 @@
     "dependencies": {
         "@makora/auth": "workspace:*",
         "@makora/db": "workspace:*",
+        "@makora/queue": "workspace:*",
         "@trpc/client": "catalog:trpc",
         "@trpc/server": "catalog:trpc",
         "chess.js": "catalog:chess",

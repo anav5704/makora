@@ -1,15 +1,15 @@
 // TODO: implement database transactions
 import { Color, db, GamePhase, Platform, Termination, TimeControl } from "@makora/db";
+import type { SyncAccountJob } from "@makora/queue";
 import { Chess } from "chess.js";
 import { z } from "zod";
-import { type ParsedPgn, parsePgn } from "../../lib/parsePgn";
+import { PAGE_SIZE } from "../../const";
 import { protectedProcedure, router } from "../index";
-import { PAGE_SIZE } from "../../const"
-import { getEval } from "../../lib/getEval";
+import { analyzeGame } from "../jobs/analyze-game";
+import { syncAccount } from "../jobs/sync-account";
 
 export const chessRouter = router({
     syncGames: protectedProcedure.mutation(async ({ ctx }) => {
-        const syncStart = new Date();
         const accounts = await db.main.chessAccount.findMany({
             where: {
                 userId: ctx.session.user.id,
@@ -22,126 +22,33 @@ export const chessRouter = router({
             },
         });
 
-        for (const { id, username, platform, syncedAt } of accounts) {
-            if (platform === Platform.CHESS_COM) {
-                const games: ParsedPgn[] = [];
-                let archives: string[] = [];
+        const jobIds: string[] = [];
 
-                const res = await fetch(`https://api.chess.com/pub/player/${username}/games/archives`);
+        for (const account of accounts) {
+            const input: SyncAccountJob = {
+                userId: ctx.session.user.id,
+                account: {
+                    id: account.id,
+                    platform: account.platform,
+                    username: account.username,
+                    syncedAt: account.syncedAt?.toISOString() ?? null,
+                },
+            };
 
-                if (res.ok) {
-                    const data = (await res.json()) as { archives: string[] };
+            const job = await db.main.job.create({
+                data: {
+                    type: "SYNC_ACCOUNT",
+                    userId: ctx.session.user.id,
+                    payload: input,
+                },
+            });
 
-                    if (syncedAt) {
-                        const minMonth = new Date(syncedAt.getFullYear(), syncedAt.getMonth(), 1);
+            await syncAccount(input, job.id);
 
-                        const newArchivces = data.archives.filter((a) => {
-                            const [yearStr, monthStr] = a.split("/").slice(-2).map(Number);
-                            const year = Number(yearStr);
-                            const month = Number(monthStr);
-                            const archiveMonth = new Date(year, month - 1);
-                            return archiveMonth >= minMonth;
-                        });
-
-                        archives = newArchivces;
-                    } else {
-                        archives = data.archives;
-                    }
-                }
-
-                for (const archive of archives) {
-                    const res = await fetch(archive);
-
-                    if (res.ok) {
-                        const data = (await res.json()) as {
-                            games: { pgn: string }[];
-                        };
-
-                        if (data.games.length) {
-                            for (const { pgn } of data.games) {
-                                const { parsedPgn } = await parsePgn({
-                                    username,
-                                    pgn,
-                                });
-
-                                // @ts-expect-error
-                                if (parsedPgn.date?.getTime() > syncedAt?.getTime()) games.push(parsedPgn);
-                            }
-                        }
-                    }
-                }
-
-                for (const game of games) {
-                    await db.main.game.create({
-                        data: {
-                            accountId: id,
-                            ...game,
-                        },
-                    });
-                }
-
-                await db.main.chessAccount.update({
-                    where: {
-                        id,
-                    },
-                    data: {
-                        syncedAt: syncStart,
-                    },
-                });
-            }
-
-            if (platform === Platform.LICHESS_ORG) {
-                const games: ParsedPgn[] = [];
-                let url = `https://lichess.org/api/games/user/${username}?sort=dateAsc`;
-
-                if (syncedAt) {
-                    url += `&since=${syncedAt.getTime()}`;
-                }
-
-                const res = await fetch(url, {
-                    headers: {
-                        Accept: "application/x-chess-pgn",
-                    },
-                });
-
-                if (res.ok) {
-                    const data = await res.text();
-                    const pgns = data
-                        .split(/\n{2,}(?=\[Event )/g)
-                        .map((s) => s.trim())
-                        .filter(Boolean);
-
-                    if (pgns.length) {
-                        for (const pgn of pgns) {
-                            const { parsedPgn } = await parsePgn({
-                                username,
-                                pgn,
-                            });
-
-                            games.push(parsedPgn);
-                        }
-
-                        for (const game of games) {
-                            await db.main.game.create({
-                                data: {
-                                    accountId: id,
-                                    ...game,
-                                },
-                            });
-                        }
-
-                        await db.main.chessAccount.update({
-                            where: {
-                                id,
-                            },
-                            data: {
-                                syncedAt: syncStart,
-                            },
-                        });
-                    }
-                }
-            }
+            jobIds.push(job.id);
         }
+
+        return { jobIds };
     }),
     getGame: protectedProcedure
         .input(
@@ -251,47 +158,26 @@ export const chessRouter = router({
         gameId: z.string()
       })
     )
-    .mutation(async ({ input: { gameId } }) => {
+    .mutation(async ({ ctx, input: { gameId } }) => {
       const evaluation = await db.main.evaluation.findUnique({
         where: {
           gameId
         }
       })
 
-      if (evaluation) return
+      if (evaluation) return { jobId: null }
 
-      const game = await db.main.game.findUnique({
-          where: {
-            id: gameId
-          },
-          select: {
-            moves: true,
-            color: true
-          }
-        })
-
-      if(!game) return
-
-      const evalResult = await getEval(game.moves, game.color)
-
-      await db.main.evaluation.create({
+      const job = await db.main.job.create({
         data: {
-          gameId,
-          accuracy: evalResult.accuracy,
-          results: evalResult.results as any,
+          type: "ANALYZE_GAME",
+          userId: ctx.session.user.id,
+          payload: { gameId },
         }
       })
 
-      await db.main.game.update({
-        where: {
-          id: gameId
-        },
-        data: {
-          reviewed: true
-        }
-      })
+      await analyzeGame({ gameId }, job.id)
 
-      console.log(evalResult)
+      return { jobId: job.id }
     }),
     updateNotes: protectedProcedure
     .input(

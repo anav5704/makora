@@ -176,6 +176,9 @@ importers:
       '@makora/db':
         specifier: workspace:*
         version: link:../db
+      '@makora/queue':
+        specifier: workspace:*
+        version: link:../queue
       '@trpc/client':
         specifier: catalog:trpc
         version: 11.6.0(@trpc/server@11.6.0(typescript@5.9.3))(typescript@5.9.3)
@@ -3517,7 +3520,7 @@ snapshots:
 
   node-abi@3.85.0:
     dependencies:
-      semver: 7.7.3
+      semver: 7.8.5
     optional: true
 
   node-abort-controller@3.1.1: {}
