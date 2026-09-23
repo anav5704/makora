@@ -1,0 +1,27 @@
+{
+    "name": "worker",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "concurrently \"pnpm dev:sync\" \"pnpm dev:analysis\"",
+        "dev:sync": "tsx watch src/sync.worker.ts",
+        "dev:analysis": "tsx watch src/analysis.worker.ts",
+        "build": "tsdown",
+        "start:sync": "node dist/sync.worker.js",
+        "start:analysis": "node dist/analysis.worker.js"
+    },
+    "dependencies": {
+        "@makora/api": "workspace:*",
+        "@makora/queue": "workspace:*",
+        "bullmq": "catalog:queue",
+        "dotenv": "catalog:dotenv"
+    },
+    "devDependencies": {
+        "concurrently": "^10.0.5",
+        "tsdown": "catalog:tsdown",
+        "tsx": "^4.23.15"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    }
+}
