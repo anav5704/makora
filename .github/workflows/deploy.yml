@@ -35,5 +35,5 @@ jobs:
             ghcr.io/anav5704/makora:latest
             ghcr.io/anav5704/makora:${{ github.sha }}
           build-args: |
-            MAKORA_DATABASE_URL=${{ secrets.MAKORA_DATABASE_URL }}
+            MAIN_DATABASE_URL=${{ secrets.MAIN_DATABASE_URL }}
             CHESS_DATABASE_URL=${{ secrets.CHESS_DATABASE_URL }}
