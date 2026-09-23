@@ -1,4 +1,4 @@
-name: deploy
+name: deploy-sync
 
 on:
   push:
@@ -25,15 +25,16 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push
+      - name: Build and push worker-sync
         uses: docker/build-push-action@v6
         with:
           context: .
+          file: apps/worker/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/anav5704/makora:latest
-            ghcr.io/anav5704/makora:${{ github.sha }}
+            ghcr.io/anav5704/makora-sync:latest
+            ghcr.io/anav5704/makora-sync:${{ github.sha }}
           build-args: |
             MAIN_DATABASE_URL=${{ secrets.MAIN_DATABASE_URL }}
             CHESS_DATABASE_URL=${{ secrets.CHESS_DATABASE_URL }}
