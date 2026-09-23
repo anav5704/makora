@@ -1,52 +1,9 @@
 services:
-  postgres-main:
-    image: postgres:17-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: main_db
-    ports:
-      - "5434:5432"
-    volumes:
-      - postgres-main-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d main_db"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  postgres-chess:
-    image: postgres:17-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: chess_db
-    ports:
-      - "5435:5432"
-    volumes:
-      - postgres-chess-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d chess_db"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
   web:
+    restart: unless-stopped
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: apps/web/Dockerfile
       args:
         MAIN_DATABASE_URL: ${MAIN_DATABASE_URL:-placeholder}
         CHESS_DATABASE_URL: ${CHESS_DATABASE_URL:-placeholder}
@@ -66,10 +23,31 @@ services:
       redis:
         condition: service_healthy
 
+  # api: reserved slot for the future apps/api (Bun + Hono) split
+  # api:
+  #   restart: unless-stopped
+  #   build:
+  #     context: .
+  #     dockerfile: apps/api/Dockerfile
+  #   ports:
+  #     - "4000:4000"
+  #   environment:
+  #     - REDIS_URL=redis://redis:6379
+  #     - MAIN_DATABASE_URL=postgres://postgres:postgres@postgres-main:5432/main_db
+  #     - CHESS_DATABASE_URL=postgres://postgres:postgres@postgres-chess:5432/chess_db
+  #   depends_on:
+  #     postgres-main:
+  #       condition: service_healthy
+  #     postgres-chess:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+
   worker-sync:
+    restart: unless-stopped
     build:
       context: .
-      dockerfile: Dockerfile.worker
+      dockerfile: apps/worker/Dockerfile
       args:
         MAIN_DATABASE_URL: ${MAIN_DATABASE_URL:-placeholder}
         CHESS_DATABASE_URL: ${CHESS_DATABASE_URL:-placeholder}
@@ -86,9 +64,10 @@ services:
         condition: service_healthy
 
   worker-analysis:
+    restart: unless-stopped
     build:
       context: .
-      dockerfile: Dockerfile.worker
+      dockerfile: apps/worker/Dockerfile
       args:
         INSTALL_STOCKFISH: "true"
         MAIN_DATABASE_URL: ${MAIN_DATABASE_URL:-placeholder}
@@ -105,6 +84,53 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+  postgres-main:
+    restart: unless-stopped
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: main_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres-main-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d main_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  postgres-chess:
+    restart: unless-stopped
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: chess_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres-chess-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d chess_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    restart: unless-stopped
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
 volumes:
   postgres-main-data:

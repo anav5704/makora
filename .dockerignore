@@ -11,7 +11,7 @@ dist
 packages/db/generated
 *.log
 .env*
-Dockerfile
+**/Dockerfile*
 .dockerignore
 README.md
 biome.json
