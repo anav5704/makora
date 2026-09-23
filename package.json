@@ -12,6 +12,9 @@
         "dev": "pnpm -r dev",
         "build": "pnpm -r build",
         "dev:web": "pnpm --filter web dev",
+        "dev:worker": "pnpm --filter worker dev",
+        "dev:worker:sync": "pnpm --filter worker dev:sync",
+        "dev:worker:analysis": "pnpm --filter worker dev:analysis",
         "db:push": "pnpm --filter @makora/db db:push",
         "db:studio": "pnpm --filter @makora/db db:studio",
         "db:generate": "pnpm --filter @makora/db db:generate"

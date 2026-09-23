@@ -43,6 +43,69 @@ services:
       timeout: 3s
       retries: 5
 
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MAIN_DATABASE_URL: ${MAIN_DATABASE_URL:-placeholder}
+        CHESS_DATABASE_URL: ${CHESS_DATABASE_URL:-placeholder}
+    ports:
+      - "3000:3000"
+    env_file:
+      - apps/web/.env.docker
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - MAIN_DATABASE_URL=postgres://postgres:postgres@postgres-main:5432/main_db
+      - CHESS_DATABASE_URL=postgres://postgres:postgres@postgres-chess:5432/chess_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+      postgres-chess:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker-sync:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+      args:
+        MAIN_DATABASE_URL: ${MAIN_DATABASE_URL:-placeholder}
+        CHESS_DATABASE_URL: ${CHESS_DATABASE_URL:-placeholder}
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - MAIN_DATABASE_URL=postgres://postgres:postgres@postgres-main:5432/main_db
+      - CHESS_DATABASE_URL=postgres://postgres:postgres@postgres-chess:5432/chess_db
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+      postgres-chess:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker-analysis:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+      args:
+        INSTALL_STOCKFISH: "true"
+        MAIN_DATABASE_URL: ${MAIN_DATABASE_URL:-placeholder}
+        CHESS_DATABASE_URL: ${CHESS_DATABASE_URL:-placeholder}
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - MAIN_DATABASE_URL=postgres://postgres:postgres@postgres-main:5432/main_db
+      - CHESS_DATABASE_URL=postgres://postgres:postgres@postgres-chess:5432/chess_db
+    command: ["bun", "src/analysis.worker.ts"]
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+      postgres-chess:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
 volumes:
   postgres-main-data:
   postgres-chess-data:
