@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { syncAccount } from "@makora/api/jobs/sync-account";
 import { SYNC_QUEUE_NAME, syncAccountJobSchema } from "@makora/queue";
 import { startWorker } from "./index";

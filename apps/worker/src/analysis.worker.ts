@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { analyzeGame } from "@makora/api/jobs/analyze-game";
 import { ANALYSIS_QUEUE_NAME, analyzeGameJobSchema } from "@makora/queue";
 import { startWorker } from "./index";
