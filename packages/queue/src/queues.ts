@@ -1,5 +1,6 @@
 import { Queue } from "bullmq";
 import type IORedis from "ioredis";
+import { createConnection } from "./connection";
 import type { AnalyzeGameJob, SyncAccountJob } from "./jobs";
 
 export const SYNC_QUEUE_NAME = "game-sync" as const;
@@ -33,4 +34,27 @@ export function createAnalysisQueue(connection: IORedis): Queue<AnalyzeGameJob> 
             removeOnFail: 500,
         },
     });
+}
+
+function redisUrl(): string {
+    const url = process.env.REDIS_URL;
+
+    if (!url) {
+        throw new Error("REDIS_URL environment variable is not set");
+    }
+
+    return url;
+}
+
+let syncQueue: Queue<SyncAccountJob> | null = null;
+let analysisQueue: Queue<AnalyzeGameJob> | null = null;
+
+export function getSyncQueue(): Queue<SyncAccountJob> {
+    syncQueue ??= createSyncQueue(createConnection(redisUrl()));
+    return syncQueue;
+}
+
+export function getAnalysisQueue(): Queue<AnalyzeGameJob> {
+    analysisQueue ??= createAnalysisQueue(createConnection(redisUrl()));
+    return analysisQueue;
 }

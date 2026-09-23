@@ -1,18 +1,21 @@
 // TODO: implement database transactions
-import { Color, db, GamePhase, Platform, Termination, TimeControl } from "@makora/db";
-import type { SyncAccountJob } from "@makora/queue";
+import { Color, db, GamePhase, JobStatus, Platform, Termination, TimeControl } from "@makora/db";
+import { getAnalysisQueue, getSyncQueue, type SyncAccountJob } from "@makora/queue";
 import { Chess } from "chess.js";
 import { z } from "zod";
 import { PAGE_SIZE } from "../../const";
 import { protectedProcedure, router } from "../index";
-import { analyzeGame } from "../jobs/analyze-game";
-import { syncAccount } from "../jobs/sync-account";
+import { failStaleJobs } from "../jobs/stale-jobs";
 
 export const chessRouter = router({
     syncGames: protectedProcedure.mutation(async ({ ctx }) => {
+        const userId = ctx.session.user.id;
+
+        await failStaleJobs(userId);
+
         const accounts = await db.main.chessAccount.findMany({
             where: {
-                userId: ctx.session.user.id,
+                userId,
             },
             select: {
                 id: true,
@@ -25,8 +28,23 @@ export const chessRouter = router({
         const jobIds: string[] = [];
 
         for (const account of accounts) {
+            const inFlight = await db.main.job.findFirst({
+                where: {
+                    userId,
+                    type: "SYNC_ACCOUNT",
+                    status: { in: [JobStatus.QUEUED, JobStatus.ACTIVE] },
+                    payload: { path: ["account", "id"], equals: account.id },
+                },
+                select: { id: true },
+            });
+
+            if (inFlight) {
+                jobIds.push(inFlight.id);
+                continue;
+            }
+
             const input: SyncAccountJob = {
-                userId: ctx.session.user.id,
+                userId,
                 account: {
                     id: account.id,
                     platform: account.platform,
@@ -38,12 +56,12 @@ export const chessRouter = router({
             const job = await db.main.job.create({
                 data: {
                     type: "SYNC_ACCOUNT",
-                    userId: ctx.session.user.id,
+                    userId,
                     payload: input,
                 },
             });
 
-            await syncAccount(input, job.id);
+            await getSyncQueue().add("sync-account", input, { jobId: job.id });
 
             jobIds.push(job.id);
         }
@@ -167,17 +185,77 @@ export const chessRouter = router({
 
       if (evaluation) return { jobId: null }
 
+      const userId = ctx.session.user.id;
+
+      await failStaleJobs(userId);
+
+      const inFlight = await db.main.job.findFirst({
+        where: {
+          userId,
+          type: "ANALYZE_GAME",
+          status: { in: [JobStatus.QUEUED, JobStatus.ACTIVE] },
+          payload: { path: ["gameId"], equals: gameId },
+        },
+        select: { id: true },
+      });
+
+      if (inFlight) return { jobId: inFlight.id };
+
       const job = await db.main.job.create({
         data: {
           type: "ANALYZE_GAME",
-          userId: ctx.session.user.id,
+          userId,
           payload: { gameId },
         }
       })
 
-      await analyzeGame({ gameId }, job.id)
+      await getAnalysisQueue().add("analyze-game", { gameId }, { jobId: job.id })
 
       return { jobId: job.id }
+    }),
+    getJobStatus: protectedProcedure
+    .input(
+      z.object({
+        jobId: z.string()
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return db.main.job.findFirst({
+        where: {
+          id: input.jobId,
+          userId: ctx.session.user.id,
+        },
+        select: {
+          id: true,
+          type: true,
+          status: true,
+          progress: true,
+          error: true,
+          updatedAt: true,
+        }
+      })
+    }),
+    getJobsStatus: protectedProcedure
+    .input(
+      z.object({
+        jobIds: z.array(z.string()).min(1).max(50)
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return db.main.job.findMany({
+        where: {
+          id: { in: input.jobIds },
+          userId: ctx.session.user.id,
+        },
+        select: {
+          id: true,
+          type: true,
+          status: true,
+          progress: true,
+          error: true,
+          updatedAt: true,
+        }
+      })
     }),
     updateNotes: protectedProcedure
     .input(
