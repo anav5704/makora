@@ -1,13 +1,14 @@
 "use client";
 
-import type { Game, Evaluation } from "@makora/db";
+import type { Evaluation, Game } from "@makora/db";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type { Dispatch, SetStateAction } from "react";
+import { useEffect, useState } from "react";
 import { Controls } from "@/components/chess/board/controls";
 import { History } from "@/components/chess/board/history";
 import { Details } from "@/components/chess/board/sidebar/details";
-import { useMutation } from "@tanstack/react-query";
-import { api, queryClient } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
+import { api, queryClient } from "@/lib/trpc";
 
 interface GameControlsProps {
     game: Game & { evaluation: Evaluation };
@@ -26,14 +27,44 @@ export const GameControls = ({
     setMoveIndex,
     onNavigate,
 }: GameControlsProps) => {
+  const [analysisJobId, setAnalysisJobId] = useState<string | null>(null);
+
   const { mutateAsync, isPending } = useMutation(
     api.chess.analyzeGame.mutationOptions({
-             onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: api.chess.getGames.queryKey() });
-                queryClient.invalidateQueries({ queryKey: api.chess.getGame.queryKey() });
+             onSuccess: ({ jobId }) => {
+                if (!jobId) {
+                    queryClient.invalidateQueries({ queryKey: api.chess.getGames.queryKey() });
+                    queryClient.invalidateQueries({ queryKey: api.chess.getGame.queryKey() });
+                    return;
+                }
+                setAnalysisJobId(jobId);
             },
       })
   )
+
+  const { data: analysisJob } = useQuery(
+    api.chess.getJobStatus.queryOptions(
+        { jobId: analysisJobId ?? "" },
+        {
+            enabled: !!analysisJobId,
+            refetchInterval: (query) => {
+                const job = query.state.data;
+                if (!job) return 2000;
+                return job.status === "COMPLETED" || job.status === "FAILED" ? false : 2000;
+            },
+        },
+    )
+  )
+
+  useEffect(() => {
+    if (!analysisJob) return;
+
+    if (analysisJob.status === "COMPLETED" || analysisJob.status === "FAILED") {
+        queryClient.invalidateQueries({ queryKey: api.chess.getGames.queryKey() });
+        queryClient.invalidateQueries({ queryKey: api.chess.getGame.queryKey() });
+        setAnalysisJobId(null);
+    }
+  }, [analysisJob]);
 
   return (
       <>
@@ -43,6 +74,10 @@ export const GameControls = ({
 
           {game.evaluation ? (
               <p className="p-5 text-center">Accuracy: {game.evaluation.accuracy}%</p>
+            ) : analysisJobId ? (
+                <p className="p-5 text-center">
+                    {analysisJob?.status === "QUEUED" ? "Queued..." : `Analyzing... ${analysisJob?.progress ?? 0}%`}
+                </p>
             ) : (
                 <Button
                       label="Computer Analysis"
