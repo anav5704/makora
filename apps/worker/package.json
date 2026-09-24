@@ -1,0 +1,23 @@
+{
+    "name": "worker",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "concurrently \"pnpm dev:sync\" \"pnpm dev:analysis\"",
+        "dev:sync": "bun --watch src/sync.worker.ts",
+        "dev:analysis": "bun --watch src/analysis.worker.ts",
+        "start:sync": "bun src/sync.worker.ts",
+        "start:analysis": "bun src/analysis.worker.ts"
+    },
+    "dependencies": {
+        "@makora/api": "workspace:*",
+        "@makora/queue": "workspace:*",
+        "bullmq": "catalog:queue"
+    },
+    "devDependencies": {
+        "concurrently": "^10.0.5"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    }
+}

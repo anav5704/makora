@@ -1,0 +1,27 @@
+model Job {
+  id        String    @id @default(uuid()) @map("_id")
+  type      JobType
+  status    JobStatus @default(QUEUED)
+  progress  Int       @default(0)
+  payload   Json?
+  error     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@map("job")
+}
+
+enum JobType {
+  SYNC_ACCOUNT
+  ANALYZE_GAME
+}
+
+enum JobStatus {
+  QUEUED
+  ACTIVE
+  COMPLETED
+  FAILED
+}

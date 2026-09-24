@@ -1,5 +1,5 @@
 {
-    "name": "@makora/api",
+    "name": "@makora/queue",
     "type": "module",
     "exports": {
         ".": {
@@ -21,13 +21,8 @@
         "typescript": "^5"
     },
     "dependencies": {
-        "@makora/auth": "workspace:*",
-        "@makora/db": "workspace:*",
-        "@makora/queue": "workspace:*",
-        "@trpc/client": "catalog:trpc",
-        "@trpc/server": "catalog:trpc",
-        "chess.js": "catalog:chess",
-        "dotenv": "catalog:dotenv",
+        "bullmq": "catalog:queue",
+        "ioredis": "catalog:queue",
         "zod": "catalog:zod"
     }
 }

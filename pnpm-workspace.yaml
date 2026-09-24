@@ -14,6 +14,9 @@ catalogs:
   prisma:
     "@prisma/client": ^7.0.0
     prisma: 7.0.0
+  queue:
+    bullmq: ^6.3.8
+    ioredis: ^6.0.0
   trpc:
     "@trpc/client": ^11.6.0
     "@trpc/server": ^11.6.0

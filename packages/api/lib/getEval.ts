@@ -105,7 +105,11 @@ const formatEval = (evaluation: number, isMate: boolean, mateIn?: number): strin
     return evalInPawns >= 0 ? `+${evalInPawns.toFixed(1)}` : evalInPawns.toFixed(1);
 };
 
-export const getEval = async (moves: string[], playerColor: "WHITE" | "BLACK"): Promise<EvalResult> => {
+export const getEval = async (
+    moves: string[],
+    playerColor: "WHITE" | "BLACK",
+    onProgress?: (completed: number, total: number) => void,
+): Promise<EvalResult> => {
     const board = new Chess();
     const results: StockfishResult[] = [];
     const stockfish = spawn("stockfish");
@@ -125,7 +129,7 @@ export const getEval = async (moves: string[], playerColor: "WHITE" | "BLACK"): 
         stockfish.stdin.write("isready\n");
     });
 
-    for (const move of moves) {
+    for (const [index, move] of moves.entries()) {
         const fenBefore = board.fen();
         const isWhiteMove = board.turn() === "w";
         const resultBefore = await getStockfishResult(stockfish, fenBefore, board);
@@ -161,6 +165,8 @@ export const getEval = async (moves: string[], playerColor: "WHITE" | "BLACK"): 
             bestMove: resultAfter.bestMove,
             winDrop: Math.round(winDrop * 100) / 100,
         });
+
+        onProgress?.(index + 1, moves.length);
     }
 
     stockfish.stdin.write("quit\n");

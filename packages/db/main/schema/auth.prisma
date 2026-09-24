@@ -10,6 +10,7 @@ model User {
   sessions      Session[]
   accounts      Account[]
   chessAccounts ChessAccount[]
+  jobs          Job[]
 
   @@unique([email])
   @@map("user")

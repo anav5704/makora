@@ -1,18 +1,21 @@
 // TODO: implement database transactions
-import { Color, db, GamePhase, Platform, Termination, TimeControl } from "@makora/db";
+import { Color, db, GamePhase, JobStatus, Platform, Termination, TimeControl } from "@makora/db";
+import { getAnalysisQueue, getSyncQueue, type SyncAccountJob } from "@makora/queue";
 import { Chess } from "chess.js";
 import { z } from "zod";
-import { type ParsedPgn, parsePgn } from "../../lib/parsePgn";
+import { PAGE_SIZE } from "../../const";
 import { protectedProcedure, router } from "../index";
-import { PAGE_SIZE } from "../../const"
-import { getEval } from "../../lib/getEval";
+import { failStaleJobs } from "../jobs/stale-jobs";
 
 export const chessRouter = router({
     syncGames: protectedProcedure.mutation(async ({ ctx }) => {
-        const syncStart = new Date();
+        const userId = ctx.session.user.id;
+
+        await failStaleJobs(userId);
+
         const accounts = await db.main.chessAccount.findMany({
             where: {
-                userId: ctx.session.user.id,
+                userId,
             },
             select: {
                 id: true,
@@ -22,126 +25,48 @@ export const chessRouter = router({
             },
         });
 
-        for (const { id, username, platform, syncedAt } of accounts) {
-            if (platform === Platform.CHESS_COM) {
-                const games: ParsedPgn[] = [];
-                let archives: string[] = [];
+        const jobIds: string[] = [];
 
-                const res = await fetch(`https://api.chess.com/pub/player/${username}/games/archives`);
+        for (const account of accounts) {
+            const inFlight = await db.main.job.findFirst({
+                where: {
+                    userId,
+                    type: "SYNC_ACCOUNT",
+                    status: { in: [JobStatus.QUEUED, JobStatus.ACTIVE] },
+                    payload: { path: ["account", "id"], equals: account.id },
+                },
+                select: { id: true },
+            });
 
-                if (res.ok) {
-                    const data = (await res.json()) as { archives: string[] };
-
-                    if (syncedAt) {
-                        const minMonth = new Date(syncedAt.getFullYear(), syncedAt.getMonth(), 1);
-
-                        const newArchivces = data.archives.filter((a) => {
-                            const [yearStr, monthStr] = a.split("/").slice(-2).map(Number);
-                            const year = Number(yearStr);
-                            const month = Number(monthStr);
-                            const archiveMonth = new Date(year, month - 1);
-                            return archiveMonth >= minMonth;
-                        });
-
-                        archives = newArchivces;
-                    } else {
-                        archives = data.archives;
-                    }
-                }
-
-                for (const archive of archives) {
-                    const res = await fetch(archive);
-
-                    if (res.ok) {
-                        const data = (await res.json()) as {
-                            games: { pgn: string }[];
-                        };
-
-                        if (data.games.length) {
-                            for (const { pgn } of data.games) {
-                                const { parsedPgn } = await parsePgn({
-                                    username,
-                                    pgn,
-                                });
-
-                                // @ts-expect-error
-                                if (parsedPgn.date?.getTime() > syncedAt?.getTime()) games.push(parsedPgn);
-                            }
-                        }
-                    }
-                }
-
-                for (const game of games) {
-                    await db.main.game.create({
-                        data: {
-                            accountId: id,
-                            ...game,
-                        },
-                    });
-                }
-
-                await db.main.chessAccount.update({
-                    where: {
-                        id,
-                    },
-                    data: {
-                        syncedAt: syncStart,
-                    },
-                });
+            if (inFlight) {
+                jobIds.push(inFlight.id);
+                continue;
             }
 
-            if (platform === Platform.LICHESS_ORG) {
-                const games: ParsedPgn[] = [];
-                let url = `https://lichess.org/api/games/user/${username}?sort=dateAsc`;
+            const input: SyncAccountJob = {
+                userId,
+                account: {
+                    id: account.id,
+                    platform: account.platform,
+                    username: account.username,
+                    syncedAt: account.syncedAt?.toISOString() ?? null,
+                },
+            };
 
-                if (syncedAt) {
-                    url += `&since=${syncedAt.getTime()}`;
-                }
+            const job = await db.main.job.create({
+                data: {
+                    type: "SYNC_ACCOUNT",
+                    userId,
+                    payload: input,
+                },
+            });
 
-                const res = await fetch(url, {
-                    headers: {
-                        Accept: "application/x-chess-pgn",
-                    },
-                });
+            await getSyncQueue().add("sync-account", input, { jobId: job.id });
 
-                if (res.ok) {
-                    const data = await res.text();
-                    const pgns = data
-                        .split(/\n{2,}(?=\[Event )/g)
-                        .map((s) => s.trim())
-                        .filter(Boolean);
-
-                    if (pgns.length) {
-                        for (const pgn of pgns) {
-                            const { parsedPgn } = await parsePgn({
-                                username,
-                                pgn,
-                            });
-
-                            games.push(parsedPgn);
-                        }
-
-                        for (const game of games) {
-                            await db.main.game.create({
-                                data: {
-                                    accountId: id,
-                                    ...game,
-                                },
-                            });
-                        }
-
-                        await db.main.chessAccount.update({
-                            where: {
-                                id,
-                            },
-                            data: {
-                                syncedAt: syncStart,
-                            },
-                        });
-                    }
-                }
-            }
+            jobIds.push(job.id);
         }
+
+        return { jobIds };
     }),
     getGame: protectedProcedure
         .input(
@@ -251,47 +176,86 @@ export const chessRouter = router({
         gameId: z.string()
       })
     )
-    .mutation(async ({ input: { gameId } }) => {
+    .mutation(async ({ ctx, input: { gameId } }) => {
       const evaluation = await db.main.evaluation.findUnique({
         where: {
           gameId
         }
       })
 
-      if (evaluation) return
+      if (evaluation) return { jobId: null }
 
-      const game = await db.main.game.findUnique({
-          where: {
-            id: gameId
-          },
-          select: {
-            moves: true,
-            color: true
-          }
-        })
+      const userId = ctx.session.user.id;
 
-      if(!game) return
+      await failStaleJobs(userId);
 
-      const evalResult = await getEval(game.moves, game.color)
-
-      await db.main.evaluation.create({
-        data: {
-          gameId,
-          accuracy: evalResult.accuracy,
-          results: evalResult.results as any,
-        }
-      })
-
-      await db.main.game.update({
+      const inFlight = await db.main.job.findFirst({
         where: {
-          id: gameId
+          userId,
+          type: "ANALYZE_GAME",
+          status: { in: [JobStatus.QUEUED, JobStatus.ACTIVE] },
+          payload: { path: ["gameId"], equals: gameId },
         },
+        select: { id: true },
+      });
+
+      if (inFlight) return { jobId: inFlight.id };
+
+      const job = await db.main.job.create({
         data: {
-          reviewed: true
+          type: "ANALYZE_GAME",
+          userId,
+          payload: { gameId },
         }
       })
 
-      console.log(evalResult)
+      await getAnalysisQueue().add("analyze-game", { gameId }, { jobId: job.id })
+
+      return { jobId: job.id }
+    }),
+    getJobStatus: protectedProcedure
+    .input(
+      z.object({
+        jobId: z.string()
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return db.main.job.findFirst({
+        where: {
+          id: input.jobId,
+          userId: ctx.session.user.id,
+        },
+        select: {
+          id: true,
+          type: true,
+          status: true,
+          progress: true,
+          error: true,
+          updatedAt: true,
+        }
+      })
+    }),
+    getJobsStatus: protectedProcedure
+    .input(
+      z.object({
+        jobIds: z.array(z.string()).min(1).max(50)
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return db.main.job.findMany({
+        where: {
+          id: { in: input.jobIds },
+          userId: ctx.session.user.id,
+        },
+        select: {
+          id: true,
+          type: true,
+          status: true,
+          progress: true,
+          error: true,
+          updatedAt: true,
+        }
+      })
     }),
     updateNotes: protectedProcedure
     .input(

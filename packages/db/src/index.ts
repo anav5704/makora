@@ -4,13 +4,15 @@ import { PrismaClient as MainClient } from "../main/generated/client";
 
 const main: MainClient = new MainClient({
     adapter: new PrismaPg({
-        connectionString: process.env.MAKORA_DATABASE_URL,
+        connectionString: process.env.MAIN_DATABASE_URL,
+        max: 20,
     }),
 });
 
 const chess: ChessClient = new ChessClient({
     adapter: new PrismaPg({
         connectionString: process.env.CHESS_DATABASE_URL,
+        max: 15,
     }),
 });
 
