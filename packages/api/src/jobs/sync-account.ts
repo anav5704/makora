@@ -7,7 +7,7 @@ import { createProgressReporter, type ProgressCallback } from "./job-progress";
 type ReportProgress = (percentage: number) => Promise<void>;
 
 const ARCHIVE_CONCURRENCY = 5;
-const INSERT_CHUNK_SIZE = 500;
+const GAME_CHUNK_SIZE = 50;
 const FETCH_TIMEOUT_MS = 30000;
 const LICHESS_FETCH_TIMEOUT_MS = 120000;
 
@@ -63,8 +63,8 @@ function warnSkippedGame(username: string, error: unknown): void {
 }
 
 async function insertGames(accountId: string, games: ParsedPgn[]): Promise<void> {
-    for (let i = 0; i < games.length; i += INSERT_CHUNK_SIZE) {
-        const chunk = games.slice(i, i + INSERT_CHUNK_SIZE);
+    for (let i = 0; i < games.length; i += GAME_CHUNK_SIZE) {
+        const chunk = games.slice(i, i + GAME_CHUNK_SIZE);
 
         await db.main.game.createMany({
             data: chunk.map((game) => ({
@@ -112,8 +112,6 @@ async function syncChessComAccount(
     syncedAt: Date | null,
     reportProgress: ReportProgress,
 ): Promise<void> {
-    const games: ParsedPgn[] = [];
-
     const res = await fetch(`https://api.chess.com/pub/player/${username}/games/archives`, {
         signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
@@ -146,15 +144,12 @@ async function syncChessComAccount(
         const chunk = archives.slice(i, i + ARCHIVE_CONCURRENCY);
         const results = await Promise.all(chunk.map((archive) => fetchChessComArchive(archive, username, syncedAt)));
 
-        games.push(...results.flat());
+        const newGames = await filterNewGames(accountId, results.flat());
+        await insertGames(accountId, newGames);
 
         const completed = Math.min(i + ARCHIVE_CONCURRENCY, archives.length);
         await reportProgress(archives.length ? (completed / archives.length) * 100 : 100);
     }
-
-    const newGames = await filterNewGames(accountId, games);
-
-    await insertGames(accountId, newGames);
 
     await db.main.chessAccount.update({
         where: {
@@ -172,7 +167,6 @@ async function syncLichessAccount(
     syncedAt: Date | null,
     reportProgress: ReportProgress,
 ): Promise<void> {
-    const games: ParsedPgn[] = [];
     let url = `https://lichess.org/api/games/user/${username}?sort=dateAsc`;
 
     if (syncedAt) {
@@ -197,27 +191,32 @@ async function syncLichessAccount(
     const data = await res.text();
     const pgns = data
         .split(/\n{2,}(?=\[Event )/g)
-        .map((s) => s.trim())
+        .map((part) => part.trim())
         .filter(Boolean);
 
-    for (const [index, pgn] of pgns.entries()) {
-        try {
-            const { parsedPgn } = await parsePgn({
-                username,
-                pgn,
-            });
+    for (let i = 0; i < pgns.length; i += GAME_CHUNK_SIZE) {
+        const slice = pgns.slice(i, i + GAME_CHUNK_SIZE);
+        const parsed: ParsedPgn[] = [];
 
-            games.push(parsedPgn);
-        } catch (error) {
-            warnSkippedGame(username, error);
+        for (const pgn of slice) {
+            try {
+                const { parsedPgn } = await parsePgn({
+                    username,
+                    pgn,
+                });
+
+                parsed.push(parsedPgn);
+            } catch (error) {
+                warnSkippedGame(username, error);
+            }
         }
 
-        await reportProgress(pgns.length ? ((index + 1) / pgns.length) * 90 : 100);
+        const newGames = await filterNewGames(accountId, parsed);
+        await insertGames(accountId, newGames);
+
+        const completed = Math.min(i + GAME_CHUNK_SIZE, pgns.length);
+        await reportProgress(pgns.length ? (completed / pgns.length) * 100 : 100);
     }
-
-    const newGames = await filterNewGames(accountId, games);
-
-    await insertGames(accountId, newGames);
 
     await db.main.chessAccount.update({
         where: {
