@@ -23,7 +23,7 @@ model Game {
   moves       String[]
   url         String
   opponent    String
-  date        DateTime
+  date        DateTime?
   timeControl TimeControl
   opening     String
   moveCount   Int

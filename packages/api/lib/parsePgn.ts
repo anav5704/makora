@@ -5,7 +5,7 @@ export interface ParsedPgn {
     moves: string[];
     url: string;
     opponent: string;
-    date: Date;
+    date: Date | null;
     timeControl: TimeControl;
     opening: string;
     moveCount: number;
@@ -50,18 +50,34 @@ const getMoveCount = (history: string[]): number => {
     return Math.ceil(history.length / 2);
 };
 
-const getDate = (headers: Record<string, string>): Date => {
+const getDate = (headers: Record<string, string>): Date | null => {
     const date = headers.UTCDate || headers.Date;
     const time = headers.UTCTime ?? "00:00:00";
 
-    if (!date) return new Date();
+    if (!date) return null;
 
     const normalizedDate = date.replace(/\./g, "-");
 
     const [year, month, day] = normalizedDate.split("-").map(Number);
     const [hour, min, sec] = time.split(":").map(Number);
 
-    //@ts-expect-error
+    if (
+        year === undefined ||
+        month === undefined ||
+        day === undefined ||
+        hour === undefined ||
+        min === undefined ||
+        sec === undefined ||
+        Number.isNaN(year) ||
+        Number.isNaN(month) ||
+        Number.isNaN(day) ||
+        Number.isNaN(hour) ||
+        Number.isNaN(min) ||
+        Number.isNaN(sec)
+    ) {
+        return null;
+    }
+
     return new Date(Date.UTC(year, month - 1, day, hour, min, sec));
 };
 

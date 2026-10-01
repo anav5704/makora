@@ -160,7 +160,7 @@ export const chessRouter = router({
                     id: cursor
                 }}),
                 orderBy: [
-                    { date: "desc" },
+                    { date: { sort: "desc", nulls: "last" } },
                     { id: "desc" },
                 ],
             });

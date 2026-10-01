@@ -95,7 +95,9 @@ async function fetchChessComArchive(archive: string, username: string, syncedAt:
                 pgn,
             });
 
-            if (!syncedAt || parsedPgn.date.getTime() > syncedAt.getTime()) games.push(parsedPgn);
+            if (!syncedAt || !parsedPgn.date || parsedPgn.date.getTime() > syncedAt.getTime()) {
+                games.push(parsedPgn);
+            }
         } catch (error) {
             warnSkippedGame(username, error);
         }
