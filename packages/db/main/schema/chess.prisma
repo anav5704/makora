@@ -59,6 +59,7 @@ enum Termination {
   CHECKMATE
   RESIGNATION
   TIMEOUT
+  DRAW
 }
 
 enum Color {

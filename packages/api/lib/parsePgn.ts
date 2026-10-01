@@ -1,5 +1,6 @@
-import { Color, db, GamePhase, Termination, TimeControl } from "@makora/db";
+import { Color, db, GamePhase, type Termination, TimeControl } from "@makora/db";
 import { Chess } from "chess.js";
+import { getTermination } from "./getTermination";
 
 export interface ParsedPgn {
     moves: string[];
@@ -34,12 +35,6 @@ const getTimeControl = (time: string): TimeControl => {
     if (baseSeconds <= 600) return TimeControl.BLITZ;
     if (baseSeconds <= 3600) return TimeControl.RAPID;
     return TimeControl.CLASSICAL;
-};
-
-const getTermination = (pgn: string): Termination => {
-    if (pgn.toLowerCase().includes("checkmate")) return Termination.CHECKMATE;
-    if (pgn.toLowerCase().includes("resign")) return Termination.RESIGNATION;
-    return Termination.TIMEOUT;
 };
 
 const getUrl = (headers: Record<string, string>): string => {
@@ -126,7 +121,7 @@ export const parsePgn = async ({ username, pgn }: { username: string; pgn: strin
         timeControl: getTimeControl(headers.TimeControl as string),
         opening: await getOpening(pgn),
         moveCount,
-        termination: getTermination(pgn),
+        termination: getTermination(pgn, headers),
         gamePhase: getGamePhase(moveCount),
         color: getColor(username, headers.White as string),
     };
