@@ -65,13 +65,6 @@ const getDate = (headers: Record<string, string>): Date => {
     return new Date(Date.UTC(year, month - 1, day, hour, min, sec));
 };
 
-const getMoves = (pgn: string): string[] => {
-    const board = new Chess();
-    board.loadPgn(pgn);
-
-    return board.history();
-};
-
 const getOpening = async (pgn: string): Promise<string> => {
     let bestOpening: string = "Unknown Opening";
     const board = new Chess();
@@ -106,18 +99,19 @@ export const parsePgn = async ({ username, pgn }: { username: string; pgn: strin
     game.loadPgn(pgn);
 
     const headers = game.getHeaders();
-    const history = game.history();
+    const moves = game.history();
+    const moveCount = getMoveCount(moves);
 
     const parsedPgn: ParsedPgn = {
-        moves: getMoves(pgn),
+        moves,
         url: getUrl(headers),
         opponent: getOpponent(getColor(username, headers.White as string), headers),
         date: getDate(headers),
         timeControl: getTimeControl(headers.TimeControl as string),
         opening: await getOpening(pgn),
-        moveCount: getMoveCount(history),
+        moveCount,
         termination: getTermination(pgn),
-        gamePhase: getGamePhase(getMoveCount(history)),
+        gamePhase: getGamePhase(moveCount),
         color: getColor(username, headers.White as string),
     };
 

@@ -6,6 +6,11 @@ import { createProgressReporter, type ProgressCallback } from "./job-progress";
 
 type ReportProgress = (percentage: number) => Promise<void>;
 
+const ARCHIVE_CONCURRENCY = 5;
+const INSERT_CHUNK_SIZE = 500;
+const FETCH_TIMEOUT_MS = 30000;
+const LICHESS_FETCH_TIMEOUT_MS = 120000;
+
 const serializeError = (error: unknown): string => {
     return error instanceof Error ? error.message : "Unknown error";
 };
@@ -57,6 +62,48 @@ function warnSkippedGame(username: string, error: unknown): void {
     console.warn(`Skipping unparseable game for ${username}:`, error instanceof Error ? error.message : error);
 }
 
+async function insertGames(accountId: string, games: ParsedPgn[]): Promise<void> {
+    for (let i = 0; i < games.length; i += INSERT_CHUNK_SIZE) {
+        const chunk = games.slice(i, i + INSERT_CHUNK_SIZE);
+
+        await db.main.game.createMany({
+            data: chunk.map((game) => ({
+                accountId,
+                ...game,
+            })),
+            skipDuplicates: true,
+        });
+    }
+}
+
+async function fetchChessComArchive(archive: string, username: string, syncedAt: Date | null): Promise<ParsedPgn[]> {
+    const games: ParsedPgn[] = [];
+    const archiveRes = await fetch(archive, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+
+    if (!archiveRes.ok) {
+        throw new Error(`Chess.com archive request failed with status ${archiveRes.status}: ${archive}`);
+    }
+
+    const archiveData = (await archiveRes.json()) as {
+        games: { pgn: string }[];
+    };
+
+    for (const { pgn } of archiveData.games) {
+        try {
+            const { parsedPgn } = await parsePgn({
+                username,
+                pgn,
+            });
+
+            if (!syncedAt || parsedPgn.date.getTime() > syncedAt.getTime()) games.push(parsedPgn);
+        } catch (error) {
+            warnSkippedGame(username, error);
+        }
+    }
+
+    return games;
+}
+
 async function syncChessComAccount(
     username: string,
     accountId: string,
@@ -65,7 +112,9 @@ async function syncChessComAccount(
 ): Promise<void> {
     const games: ParsedPgn[] = [];
 
-    const res = await fetch(`https://api.chess.com/pub/player/${username}/games/archives`);
+    const res = await fetch(`https://api.chess.com/pub/player/${username}/games/archives`, {
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
 
     if (res.status === 404) {
         throw new UnrecoverableError(`Chess.com user not found: ${username}`);
@@ -91,43 +140,19 @@ async function syncChessComAccount(
         });
     }
 
-    for (const [index, archive] of archives.entries()) {
-        const archiveRes = await fetch(archive);
+    for (let i = 0; i < archives.length; i += ARCHIVE_CONCURRENCY) {
+        const chunk = archives.slice(i, i + ARCHIVE_CONCURRENCY);
+        const results = await Promise.all(chunk.map((archive) => fetchChessComArchive(archive, username, syncedAt)));
 
-        if (!archiveRes.ok) {
-            throw new Error(`Chess.com archive request failed with status ${archiveRes.status}: ${archive}`);
-        }
+        games.push(...results.flat());
 
-        const archiveData = (await archiveRes.json()) as {
-            games: { pgn: string }[];
-        };
-
-        for (const { pgn } of archiveData.games) {
-            try {
-                const { parsedPgn } = await parsePgn({
-                    username,
-                    pgn,
-                });
-
-                if (!syncedAt || parsedPgn.date.getTime() > syncedAt.getTime()) games.push(parsedPgn);
-            } catch (error) {
-                warnSkippedGame(username, error);
-            }
-        }
-
-        await reportProgress(archives.length ? ((index + 1) / archives.length) * 100 : 100);
+        const completed = Math.min(i + ARCHIVE_CONCURRENCY, archives.length);
+        await reportProgress(archives.length ? (completed / archives.length) * 100 : 100);
     }
 
     const newGames = await filterNewGames(accountId, games);
 
-    for (const game of newGames) {
-        await db.main.game.create({
-            data: {
-                accountId,
-                ...game,
-            },
-        });
-    }
+    await insertGames(accountId, newGames);
 
     await db.main.chessAccount.update({
         where: {
@@ -156,6 +181,7 @@ async function syncLichessAccount(
         headers: {
             Accept: "application/x-chess-pgn",
         },
+        signal: AbortSignal.timeout(LICHESS_FETCH_TIMEOUT_MS),
     });
 
     if (res.status === 404) {
@@ -189,14 +215,7 @@ async function syncLichessAccount(
 
     const newGames = await filterNewGames(accountId, games);
 
-    for (const game of newGames) {
-        await db.main.game.create({
-            data: {
-                accountId,
-                ...game,
-            },
-        });
-    }
+    await insertGames(accountId, newGames);
 
     await db.main.chessAccount.update({
         where: {
