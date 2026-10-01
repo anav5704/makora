@@ -131,10 +131,22 @@ async function syncChessComAccount(
     if (syncedAt) {
         const minMonth = new Date(syncedAt.getFullYear(), syncedAt.getMonth(), 1);
 
-        archives = data.archives.filter((a) => {
-            const [yearStr, monthStr] = a.split("/").slice(-2).map(Number);
+        archives = data.archives.filter((archive) => {
+            const [yearStr, monthStr] = archive.split("/").slice(-2);
+
+            if (!yearStr || !monthStr) {
+                console.warn(`Skipping malformed archive URL: ${archive}`);
+                return false;
+            }
+
             const year = Number(yearStr);
             const month = Number(monthStr);
+
+            if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+                console.warn(`Skipping malformed archive URL: ${archive}`);
+                return false;
+            }
+
             const archiveMonth = new Date(year, month - 1);
             return archiveMonth >= minMonth;
         });
