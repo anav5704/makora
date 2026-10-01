@@ -38,6 +38,7 @@ model Game {
   account     ChessAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
   evaluation  Evaluation?
 
+  @@unique([accountId, url])
   @@map("game")
 }
 
