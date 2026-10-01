@@ -21,7 +21,7 @@ const getGamePhase = (moveCount: number): GamePhase => {
 };
 
 const getColor = (username: string, white: string): Color => {
-    return username === white ? Color.WHITE : Color.BLACK;
+    return username.toLowerCase() === white?.toLowerCase() ? Color.WHITE : Color.BLACK;
 };
 
 const getOpponent = (color: Color, headers: Record<string, string>): string => {
