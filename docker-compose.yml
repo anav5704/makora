@@ -43,7 +43,7 @@ services:
       redis:
         condition: service_healthy
 
-  worker-sync:
+  sync:
     restart: unless-stopped
     build:
       context: .
@@ -60,7 +60,7 @@ services:
       redis:
         condition: service_healthy
 
-  worker-analysis:
+  analysis:
     restart: unless-stopped
     build:
       context: .
