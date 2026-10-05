@@ -8,7 +8,6 @@
     },
     "dependencies": {
         "@headlessui/react": "^2.2.9",
-        "@hono/trpc-server": "^0.4.2",
         "@lichess-org/chessground": "^9.9.0",
         "@makora/api": "workspace:*",
         "@makora/auth": "workspace:*",

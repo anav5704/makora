@@ -12,17 +12,20 @@
         "dev": "pnpm -r dev",
         "build": "pnpm -r build",
         "dev:web": "pnpm --filter web dev",
+        "dev:api": "pnpm --filter api dev",
         "dev:worker": "pnpm --filter worker dev",
-        "dev:worker:sync": "pnpm --filter worker dev:sync",
-        "dev:worker:analysis": "pnpm --filter worker dev:analysis",
+        "dev:sync": "pnpm --filter worker dev:sync",
+        "dev:analysis": "pnpm --filter worker dev:analysis",
         "db:push": "pnpm --filter @makora/db db:push",
         "db:studio": "pnpm --filter @makora/db db:studio",
-        "db:generate": "pnpm --filter @makora/db db:generate"
+        "db:generate": "pnpm --filter @makora/db db:generate",
+        "compose:up": "docker compose up -d",
+        "compose:down": "docker compose down"
     },
     "devDependencies": {
-        "@biomejs/biome": "^2.2.0",
-        "@types/node": "^22.13.11",
-        "tsdown": "^0.15.5"
+        "@biomejs/biome": "^2.5.15",
+        "@types/node": "^22.20.5",
+        "tsdown": "^0.15.12"
     },
     "packageManager": "pnpm@10.23.0"
 }

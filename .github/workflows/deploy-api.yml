@@ -1,4 +1,4 @@
-name: deploy-analysis
+name: deploy-api
 
 on:
   push:
@@ -25,15 +25,13 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push analysis
+      - name: Build and push api
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: apps/worker/Dockerfile
+          file: apps/api/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/anav5704/makora-analysis:latest
-            ghcr.io/anav5704/makora-analysis:${{ github.sha }}
-          build-args: |
-            INSTALL_STOCKFISH=true
+            ghcr.io/anav5704/makora-api:latest
+            ghcr.io/anav5704/makora-api:${{ github.sha }}

@@ -4,9 +4,6 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-      args:
-        MAIN_DATABASE_URL: ${MAIN_DATABASE_URL:-placeholder}
-        CHESS_DATABASE_URL: ${CHESS_DATABASE_URL:-placeholder}
     ports:
       - "3000:3000"
     env_file:
@@ -23,34 +20,34 @@ services:
       redis:
         condition: service_healthy
 
-  # api: reserved slot for the future apps/api (Bun + Hono) split
-  # api:
-  #   restart: unless-stopped
-  #   build:
-  #     context: .
-  #     dockerfile: apps/api/Dockerfile
-  #   ports:
-  #     - "4000:4000"
-  #   environment:
-  #     - REDIS_URL=redis://redis:6379
-  #     - MAIN_DATABASE_URL=postgres://postgres:postgres@postgres-main:5432/main_db
-  #     - CHESS_DATABASE_URL=postgres://postgres:postgres@postgres-chess:5432/chess_db
-  #   depends_on:
-  #     postgres-main:
-  #       condition: service_healthy
-  #     postgres-chess:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
+  api:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    ports:
+      - "4000:4000"
+    env_file:
+      - apps/api/.env.docker
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - MAIN_DATABASE_URL=postgres://postgres:postgres@postgres-main:5432/main_db
+      - CHESS_DATABASE_URL=postgres://postgres:postgres@postgres-chess:5432/chess_db
+      - CORS_ORIGIN=http://localhost:3000
+      - API_PORT=4000
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+      postgres-chess:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
-  worker-sync:
+  sync:
     restart: unless-stopped
     build:
       context: .
       dockerfile: apps/worker/Dockerfile
-      args:
-        MAIN_DATABASE_URL: ${MAIN_DATABASE_URL:-placeholder}
-        CHESS_DATABASE_URL: ${CHESS_DATABASE_URL:-placeholder}
     environment:
       - REDIS_URL=redis://redis:6379
       - MAIN_DATABASE_URL=postgres://postgres:postgres@postgres-main:5432/main_db
@@ -63,15 +60,13 @@ services:
       redis:
         condition: service_healthy
 
-  worker-analysis:
+  analysis:
     restart: unless-stopped
     build:
       context: .
       dockerfile: apps/worker/Dockerfile
       args:
         INSTALL_STOCKFISH: "true"
-        MAIN_DATABASE_URL: ${MAIN_DATABASE_URL:-placeholder}
-        CHESS_DATABASE_URL: ${CHESS_DATABASE_URL:-placeholder}
     environment:
       - REDIS_URL=redis://redis:6379
       - MAIN_DATABASE_URL=postgres://postgres:postgres@postgres-main:5432/main_db
