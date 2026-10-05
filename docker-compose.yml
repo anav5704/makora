@@ -43,6 +43,25 @@ services:
       redis:
         condition: service_healthy
 
+  openings:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: apps/openings/Dockerfile
+    ports:
+      - "4001:4001"
+    env_file:
+      - apps/openings/.env.docker
+    environment:
+      - MAIN_DATABASE_URL=postgres://postgres:postgres@postgres-main:5432/main_db
+      - CHESS_DATABASE_URL=postgres://postgres:postgres@postgres-chess:5432/chess_db
+      - OPENINGS_PORT=4001
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+      postgres-chess:
+        condition: service_healthy
+
   sync:
     restart: unless-stopped
     build:
@@ -52,6 +71,7 @@ services:
       - REDIS_URL=redis://redis:6379
       - MAIN_DATABASE_URL=postgres://postgres:postgres@postgres-main:5432/main_db
       - CHESS_DATABASE_URL=postgres://postgres:postgres@postgres-chess:5432/chess_db
+      - OPENINGS_URL=http://openings:4001
     depends_on:
       postgres-main:
         condition: service_healthy
@@ -59,6 +79,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      openings:
+        condition: service_started
 
   analysis:
     restart: unless-stopped

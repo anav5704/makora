@@ -1,4 +1,4 @@
-import { Color, db, GamePhase, type Termination, TimeControl } from "@makora/db";
+import { Color, GamePhase, type Termination, TimeControl } from "@makora/db";
 import { Chess } from "chess.js";
 import { getTermination } from "./getTermination";
 
@@ -86,32 +86,25 @@ const getDate = (headers: Record<string, string>): Date | null => {
 };
 
 const getOpening = async (pgn: string): Promise<string> => {
-    let bestOpening: string = "Unknown Opening";
-    const board = new Chess();
-    board.loadPgn(pgn);
-    const moves = board.history();
-
-    const game = new Chess();
-
-    for (const move of moves) {
-        game.move(move);
-        const fen = game.fen().split(" ")[0];
-
-        const candidateOpening = await db.chess.opening.findFirst({
-            where: {
-                fen,
-            },
-            select: {
-                name: true,
-            },
+    try {
+        const res = await fetch(`${process.env.OPENINGS_URL ?? "http://localhost:4001"}/classify`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pgn }),
+            signal: AbortSignal.timeout(10000),
         });
 
-        if (candidateOpening) {
-            bestOpening = candidateOpening.name;
+        if (!res.ok) {
+            console.warn(`Openings service responded with status ${res.status}, falling back to Unknown Opening`);
+            return "Unknown Opening";
         }
-    }
 
-    return bestOpening;
+        const data = (await res.json()) as { name?: unknown };
+        return typeof data.name === "string" ? data.name : "Unknown Opening";
+    } catch (error) {
+        console.warn("Openings service unreachable, falling back to Unknown Opening:", error);
+        return "Unknown Opening";
+    }
 };
 
 export const parsePgn = async ({

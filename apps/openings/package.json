@@ -1,0 +1,22 @@
+{
+    "name": "openings",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "bun --watch src/index.ts",
+        "start": "bun src/index.ts",
+        "build": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@makora/db": "workspace:*",
+        "chess.js": "catalog:chess",
+        "hono": "^4.11.7"
+    },
+    "devDependencies": {
+        "@types/node": "^20",
+        "typescript": "^5"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    }
+}
