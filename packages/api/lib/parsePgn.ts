@@ -1,11 +1,12 @@
-import { Color, db, GamePhase, Termination, TimeControl } from "@makora/db";
+import { Color, db, GamePhase, type Termination, TimeControl } from "@makora/db";
 import { Chess } from "chess.js";
+import { getTermination } from "./getTermination";
 
 export interface ParsedPgn {
     moves: string[];
     url: string;
     opponent: string;
-    date: Date;
+    date: Date | null;
     timeControl: TimeControl;
     opening: string;
     moveCount: number;
@@ -21,25 +22,28 @@ const getGamePhase = (moveCount: number): GamePhase => {
 };
 
 const getColor = (username: string, white: string): Color => {
-    return username === white ? Color.WHITE : Color.BLACK;
+    return username.toLowerCase() === white?.toLowerCase() ? Color.WHITE : Color.BLACK;
 };
 
 const getOpponent = (color: Color, headers: Record<string, string>): string => {
     return color === Color.WHITE ? (headers.Black as string) : (headers.White as string);
 };
 
-const getTimeControl = (time: string): TimeControl => {
+export const getTimeControl = (time: string): TimeControl => {
+    if (!time || time.includes("/")) return TimeControl.CLASSICAL;
+
     const baseSeconds = parseInt(time.split("+")[0] as string, 10);
-    if (baseSeconds <= 180) return TimeControl.BULLET;
-    if (baseSeconds <= 600) return TimeControl.BLITZ;
+
+    if (Number.isNaN(baseSeconds)) return TimeControl.CLASSICAL;
+    if (baseSeconds < 180) return TimeControl.BULLET;
+    if (baseSeconds < 600) return TimeControl.BLITZ;
     if (baseSeconds <= 3600) return TimeControl.RAPID;
     return TimeControl.CLASSICAL;
 };
 
-const getTermination = (pgn: string): Termination => {
-    if (pgn.toLowerCase().includes("checkmate")) return Termination.CHECKMATE;
-    if (pgn.toLowerCase().includes("resign")) return Termination.RESIGNATION;
-    return Termination.TIMEOUT;
+const getIsLoss = (result: string | undefined, color: Color): boolean => {
+    if (color === Color.WHITE) return result === "0-1";
+    return result === "1-0";
 };
 
 const getUrl = (headers: Record<string, string>): string => {
@@ -50,26 +54,35 @@ const getMoveCount = (history: string[]): number => {
     return Math.ceil(history.length / 2);
 };
 
-const getDate = (headers: Record<string, string>): Date => {
+const getDate = (headers: Record<string, string>): Date | null => {
     const date = headers.UTCDate || headers.Date;
     const time = headers.UTCTime ?? "00:00:00";
 
-    if (!date) return new Date();
+    if (!date) return null;
 
     const normalizedDate = date.replace(/\./g, "-");
 
     const [year, month, day] = normalizedDate.split("-").map(Number);
     const [hour, min, sec] = time.split(":").map(Number);
 
-    //@ts-expect-error
+    if (
+        year === undefined ||
+        month === undefined ||
+        day === undefined ||
+        hour === undefined ||
+        min === undefined ||
+        sec === undefined ||
+        Number.isNaN(year) ||
+        Number.isNaN(month) ||
+        Number.isNaN(day) ||
+        Number.isNaN(hour) ||
+        Number.isNaN(min) ||
+        Number.isNaN(sec)
+    ) {
+        return null;
+    }
+
     return new Date(Date.UTC(year, month - 1, day, hour, min, sec));
-};
-
-const getMoves = (pgn: string): string[] => {
-    const board = new Chess();
-    board.loadPgn(pgn);
-
-    return board.history();
 };
 
 const getOpening = async (pgn: string): Promise<string> => {
@@ -101,24 +114,44 @@ const getOpening = async (pgn: string): Promise<string> => {
     return bestOpening;
 };
 
-export const parsePgn = async ({ username, pgn }: { username: string; pgn: string }) => {
+export const parsePgn = async ({
+    username,
+    pgn,
+}: {
+    username: string;
+    pgn: string;
+}): Promise<{ parsedPgn: ParsedPgn | null }> => {
     const game = new Chess();
     game.loadPgn(pgn);
 
     const headers = game.getHeaders();
-    const history = game.history();
+
+    const variant = headers.Variant;
+
+    if (variant && variant.toLowerCase() !== "standard") {
+        console.warn(`Skipping ${variant} game (only standard chess is supported)`);
+        return { parsedPgn: null };
+    }
+
+    const moves = game.history();
+    const moveCount = getMoveCount(moves);
+    const color = getColor(username, headers.White as string);
+
+    if (!getIsLoss(headers.Result, color)) {
+        return { parsedPgn: null };
+    }
 
     const parsedPgn: ParsedPgn = {
-        moves: getMoves(pgn),
+        moves,
         url: getUrl(headers),
-        opponent: getOpponent(getColor(username, headers.White as string), headers),
+        opponent: getOpponent(color, headers),
         date: getDate(headers),
         timeControl: getTimeControl(headers.TimeControl as string),
         opening: await getOpening(pgn),
-        moveCount: getMoveCount(history),
-        termination: getTermination(pgn),
-        gamePhase: getGamePhase(getMoveCount(history)),
-        color: getColor(username, headers.White as string),
+        moveCount,
+        termination: getTermination(pgn, headers),
+        gamePhase: getGamePhase(moveCount),
+        color,
     };
 
     return { parsedPgn };

@@ -23,7 +23,7 @@ model Game {
   moves       String[]
   url         String
   opponent    String
-  date        DateTime
+  date        DateTime?
   timeControl TimeControl
   opening     String
   moveCount   Int
@@ -38,6 +38,7 @@ model Game {
   account     ChessAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
   evaluation  Evaluation?
 
+  @@unique([accountId, url])
   @@map("game")
 }
 
@@ -58,6 +59,7 @@ enum Termination {
   CHECKMATE
   RESIGNATION
   TIMEOUT
+  DRAW
 }
 
 enum Color {

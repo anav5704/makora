@@ -86,6 +86,8 @@ export const insightsRouter = router({
         const gamesByDay = new Map<string, typeof games>();
 
         games.forEach((game) => {
+            if (!game.date) return;
+
             const date = new Date(game.date);
             const dayKey = date.toISOString().split("T")[0] as string;
 
@@ -203,12 +205,17 @@ export const insightsRouter = router({
         const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
 
         // Aggregate each distribution
-        const timeControl = aggregate(games.map((g) => g.timeControl));
-        const gamePhase = aggregate(games.map((g) => g.gamePhase));
-        const termination = aggregate(games.map((g) => g.termination));
-        const dayOfWeek = aggregate(games.map((g) => dayNames[new Date(g.date).getDay()] as string));
-        const color = aggregate(games.map((g) => g.color));
-        const platform = aggregate(games.map((g) => g.account.platform));
+        const timeControl = aggregate(games.map((game) => game.timeControl));
+        const gamePhase = aggregate(games.map((game) => game.gamePhase));
+        const termination = aggregate(games.map((game) => game.termination));
+        const dayOfWeek = aggregate(
+            games.map((game) => {
+                if (!game.date) return "Unknown";
+                return dayNames[new Date(game.date).getDay()] as string;
+            }),
+        );
+        const color = aggregate(games.map((game) => game.color));
+        const platform = aggregate(games.map((game) => game.account.platform));
 
         return {
             timeControl,

@@ -49,7 +49,7 @@ export const GamesList = ({ games }: GamesListProps) => {
                                 <span className="col-span-1">{evaluation?.accuracy ? evaluation.accuracy + "%" : "-"}</span>
                                 <span className="col-span-1">{normalizeEnum(gamePhase)}</span>
                                 <span className="col-span-1">{normalizeEnum(termination)}</span>
-                                <span className="col-span-1">{relativeDate(new Date(date))}</span>
+                                <span className="col-span-1">{date ? relativeDate(new Date(date)) : "Unknown"}</span>
                             </p>
                         </Link>
                     );

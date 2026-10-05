@@ -12,7 +12,7 @@ export const Details = ({ game }: DetailsProps) => {
             <h3 className="truncate">Opening: {game.opening}</h3>
             <h3 className="truncate">Time Control: {normalizeEnum(game.timeControl)}</h3>
             <h3 className="truncate">Termination: {normalizeEnum(game.termination)}</h3>
-            <h3 className="truncate">Date: {new Date(game.date).toDateString()}</h3>
+            <h3 className="truncate">Date: {game.date ? new Date(game.date).toDateString() : "Unknown"}</h3>
         </div>
     );
 };

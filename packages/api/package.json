@@ -24,6 +24,7 @@
         "@makora/auth": "workspace:*",
         "@makora/db": "workspace:*",
         "@makora/queue": "workspace:*",
+        "bullmq": "catalog:queue",
         "@trpc/client": "catalog:trpc",
         "@trpc/server": "catalog:trpc",
         "chess.js": "catalog:chess",
