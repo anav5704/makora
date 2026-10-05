@@ -90,6 +90,25 @@ importers:
         specifier: ^5
         version: 5.9.3
 
+  apps/openings:
+    dependencies:
+      '@makora/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      chess.js:
+        specifier: catalog:chess
+        version: 1.4.0
+      hono:
+        specifier: ^4.11.7
+        version: 4.11.7
+    devDependencies:
+      '@types/node':
+        specifier: ^20
+        version: 20.19.23
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
   apps/web:
     dependencies:
       '@headlessui/react':

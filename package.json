@@ -13,6 +13,7 @@
         "build": "pnpm -r build",
         "dev:web": "pnpm --filter web dev",
         "dev:api": "pnpm --filter api dev",
+        "dev:openings": "pnpm --filter openings dev",
         "dev:worker": "pnpm --filter worker dev",
         "dev:sync": "pnpm --filter worker dev:sync",
         "dev:analysis": "pnpm --filter worker dev:analysis",
