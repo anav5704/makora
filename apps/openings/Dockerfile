@@ -12,13 +12,15 @@ RUN pnpm install --frozen-lockfile
 
 RUN pnpm db:generate
 
+RUN pnpm --filter openings --prod --legacy deploy /app/deploy/openings
+
 FROM oven/bun:slim AS runner
 
 WORKDIR /app/apps/openings
 
-COPY --from=builder /app/apps/openings ./
-COPY --from=builder /app/packages /app/packages
-COPY --from=builder /app/node_modules /app/node_modules
+COPY --from=builder /app/deploy/openings ./
+COPY --from=builder /app/packages/db/main/generated ./node_modules/@makora/db/main/generated
+COPY --from=builder /app/packages/db/chess/generated ./node_modules/@makora/db/chess/generated
 
 EXPOSE 4001
 
