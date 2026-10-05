@@ -62,6 +62,10 @@ function warnSkippedGame(username: string, error: unknown): void {
     console.warn(`Skipping unparseable game for ${username}:`, error instanceof Error ? error.message : error);
 }
 
+const hasRequiredFields = (game: ParsedPgn): boolean => {
+    return Boolean(game.url && game.opponent);
+};
+
 async function insertGames(accountId: string, games: ParsedPgn[]): Promise<void> {
     for (let i = 0; i < games.length; i += GAME_CHUNK_SIZE) {
         const chunk = games.slice(i, i + GAME_CHUNK_SIZE);
@@ -102,6 +106,11 @@ async function fetchChessComArchive(
 
             if (!parsedPgn) {
                 onSkipped();
+                continue;
+            }
+
+            if (!hasRequiredFields(parsedPgn)) {
+                warnSkippedGame(username, "missing required game headers");
                 continue;
             }
 
@@ -241,6 +250,11 @@ async function syncLichessAccount(
 
                 if (!parsedPgn) {
                     skipped += 1;
+                    continue;
+                }
+
+                if (!hasRequiredFields(parsedPgn)) {
+                    warnSkippedGame(username, "missing required game headers");
                     continue;
                 }
 

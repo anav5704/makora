@@ -1,4 +1,3 @@
-// TODO: implement database transactions
 import { Color, db, GamePhase, JobStatus, Platform, Termination, TimeControl } from "@makora/db";
 import { getAnalysisQueue, getSyncQueue, type SyncAccountJob } from "@makora/queue";
 import { Chess } from "chess.js";
