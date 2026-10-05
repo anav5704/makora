@@ -37,5 +37,3 @@ jobs:
             ghcr.io/anav5704/makora-analysis:${{ github.sha }}
           build-args: |
             INSTALL_STOCKFISH=true
-            MAIN_DATABASE_URL=${{ secrets.MAIN_DATABASE_URL }}
-            CHESS_DATABASE_URL=${{ secrets.CHESS_DATABASE_URL }}

@@ -10,12 +10,6 @@ COPY . .
 
 RUN pnpm install --frozen-lockfile
 
-ARG MAIN_DATABASE_URL
-ENV MAIN_DATABASE_URL=$MAIN_DATABASE_URL
-
-ARG CHESS_DATABASE_URL
-ENV CHESS_DATABASE_URL=$CHESS_DATABASE_URL
-
 RUN pnpm db:generate
 
 FROM oven/bun:slim AS runner
