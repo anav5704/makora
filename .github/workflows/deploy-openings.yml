@@ -1,10 +1,10 @@
-name: deploy-api
+name: deploy-openings
 
 on:
   push:
     branches: [main]
     paths:
-      - "apps/api/**"
+      - "apps/openings/**"
       - "packages/**"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
@@ -27,15 +27,15 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push api
+      - name: Build and push openings
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: apps/api/Dockerfile
+          file: apps/openings/Dockerfile
           platforms: linux/amd64
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
           tags: |
-            ghcr.io/anav5704/makora-api:latest
-            ghcr.io/anav5704/makora-api:${{ github.sha }}
+            ghcr.io/anav5704/makora-openings:latest
+            ghcr.io/anav5704/makora-openings:${{ github.sha }}
