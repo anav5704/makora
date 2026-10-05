@@ -1,13 +1,12 @@
 import { db } from "@makora/db";
 import { type BetterAuthOptions, betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { nextCookies } from "better-auth/next-js";
 
 export const auth = betterAuth<BetterAuthOptions>({
     database: prismaAdapter(db.main, {
         provider: "postgresql",
     }),
-    trustedOrigins: [process.env.CORS_ORIGIN || ""],
+    trustedOrigins: (process.env.CORS_ORIGIN ?? "").split(",").filter(Boolean),
     emailAndPassword: {
         enabled: true,
     },
@@ -19,7 +18,6 @@ export const auth = betterAuth<BetterAuthOptions>({
             },
         },
     },
-    plugins: [nextCookies()],
 });
 
 export type User = typeof auth.$Infer.Session.user;
