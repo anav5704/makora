@@ -29,12 +29,21 @@ const getOpponent = (color: Color, headers: Record<string, string>): string => {
     return color === Color.WHITE ? (headers.Black as string) : (headers.White as string);
 };
 
-const getTimeControl = (time: string): TimeControl => {
+export const getTimeControl = (time: string): TimeControl => {
+    if (!time || time.includes("/")) return TimeControl.CLASSICAL;
+
     const baseSeconds = parseInt(time.split("+")[0] as string, 10);
-    if (baseSeconds <= 180) return TimeControl.BULLET;
-    if (baseSeconds <= 600) return TimeControl.BLITZ;
+
+    if (Number.isNaN(baseSeconds)) return TimeControl.CLASSICAL;
+    if (baseSeconds < 180) return TimeControl.BULLET;
+    if (baseSeconds < 600) return TimeControl.BLITZ;
     if (baseSeconds <= 3600) return TimeControl.RAPID;
     return TimeControl.CLASSICAL;
+};
+
+const getIsLoss = (result: string | undefined, color: Color): boolean => {
+    if (color === Color.WHITE) return result === "0-1";
+    return result === "1-0";
 };
 
 const getUrl = (headers: Record<string, string>): string => {
@@ -105,25 +114,44 @@ const getOpening = async (pgn: string): Promise<string> => {
     return bestOpening;
 };
 
-export const parsePgn = async ({ username, pgn }: { username: string; pgn: string }) => {
+export const parsePgn = async ({
+    username,
+    pgn,
+}: {
+    username: string;
+    pgn: string;
+}): Promise<{ parsedPgn: ParsedPgn | null }> => {
     const game = new Chess();
     game.loadPgn(pgn);
 
     const headers = game.getHeaders();
+
+    const variant = headers.Variant;
+
+    if (variant && variant.toLowerCase() !== "standard") {
+        console.warn(`Skipping ${variant} game (only standard chess is supported)`);
+        return { parsedPgn: null };
+    }
+
     const moves = game.history();
     const moveCount = getMoveCount(moves);
+    const color = getColor(username, headers.White as string);
+
+    if (!getIsLoss(headers.Result, color)) {
+        return { parsedPgn: null };
+    }
 
     const parsedPgn: ParsedPgn = {
         moves,
         url: getUrl(headers),
-        opponent: getOpponent(getColor(username, headers.White as string), headers),
+        opponent: getOpponent(color, headers),
         date: getDate(headers),
         timeControl: getTimeControl(headers.TimeControl as string),
         opening: await getOpening(pgn),
         moveCount,
         termination: getTermination(pgn, headers),
         gamePhase: getGamePhase(moveCount),
-        color: getColor(username, headers.White as string),
+        color,
     };
 
     return { parsedPgn };

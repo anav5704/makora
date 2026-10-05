@@ -76,7 +76,12 @@ async function insertGames(accountId: string, games: ParsedPgn[]): Promise<void>
     }
 }
 
-async function fetchChessComArchive(archive: string, username: string, syncedAt: Date | null): Promise<ParsedPgn[]> {
+async function fetchChessComArchive(
+    archive: string,
+    username: string,
+    syncedAt: Date | null,
+    onSkipped: () => void,
+): Promise<ParsedPgn[]> {
     const games: ParsedPgn[] = [];
     const archiveRes = await fetch(archive, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
 
@@ -94,6 +99,11 @@ async function fetchChessComArchive(archive: string, username: string, syncedAt:
                 username,
                 pgn,
             });
+
+            if (!parsedPgn) {
+                onSkipped();
+                continue;
+            }
 
             if (!syncedAt || !parsedPgn.date || parsedPgn.date.getTime() > syncedAt.getTime()) {
                 games.push(parsedPgn);
@@ -152,9 +162,17 @@ async function syncChessComAccount(
         });
     }
 
+    let skipped = 0;
+
     for (let i = 0; i < archives.length; i += ARCHIVE_CONCURRENCY) {
         const chunk = archives.slice(i, i + ARCHIVE_CONCURRENCY);
-        const results = await Promise.all(chunk.map((archive) => fetchChessComArchive(archive, username, syncedAt)));
+        const results = await Promise.all(
+            chunk.map((archive) =>
+                fetchChessComArchive(archive, username, syncedAt, () => {
+                    skipped += 1;
+                }),
+            ),
+        );
 
         const newGames = await filterNewGames(accountId, results.flat());
         await insertGames(accountId, newGames);
@@ -162,6 +180,8 @@ async function syncChessComAccount(
         const completed = Math.min(i + ARCHIVE_CONCURRENCY, archives.length);
         await reportProgress(archives.length ? (completed / archives.length) * 100 : 100);
     }
+
+    console.log(`Synced chess.com account ${username} (${skipped} non-losses skipped)`);
 
     await db.main.chessAccount.update({
         where: {
@@ -206,6 +226,8 @@ async function syncLichessAccount(
         .map((part) => part.trim())
         .filter(Boolean);
 
+    let skipped = 0;
+
     for (let i = 0; i < pgns.length; i += GAME_CHUNK_SIZE) {
         const slice = pgns.slice(i, i + GAME_CHUNK_SIZE);
         const parsed: ParsedPgn[] = [];
@@ -216,6 +238,11 @@ async function syncLichessAccount(
                     username,
                     pgn,
                 });
+
+                if (!parsedPgn) {
+                    skipped += 1;
+                    continue;
+                }
 
                 parsed.push(parsedPgn);
             } catch (error) {
@@ -229,6 +256,8 @@ async function syncLichessAccount(
         const completed = Math.min(i + GAME_CHUNK_SIZE, pgns.length);
         await reportProgress(pgns.length ? (completed / pgns.length) * 100 : 100);
     }
+
+    console.log(`Synced lichess account ${username} (${skipped} non-losses skipped)`);
 
     await db.main.chessAccount.update({
         where: {
