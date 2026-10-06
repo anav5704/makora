@@ -16,6 +16,7 @@
         "db:studio": "cd main && prisma studio",
         "db:seed": "cd chess && prisma db seed",
         "db:push": "cd main && prisma db push && cd ../chess && prisma db push",
+        "db:reset": "cd main && prisma migrate reset --force",
         "db:generate": "cd main && prisma generate && cd ../chess && prisma generate"
     },
     "devDependencies": {

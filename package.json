@@ -9,7 +9,7 @@
     "scripts": {
         "check": "biome check",
         "fix": "biome check --write",
-        "dev": "pnpm -r dev",
+        "dev": "pnpm -r --parallel --if-present dev",
         "build": "pnpm -r build",
         "dev:web": "pnpm --filter web dev",
         "dev:api": "pnpm --filter api dev",
@@ -18,10 +18,14 @@
         "dev:sync": "pnpm --filter worker dev:sync",
         "dev:analysis": "pnpm --filter worker dev:analysis",
         "db:push": "pnpm --filter @makora/db db:push",
+        "db:reset": "pnpm --filter @makora/db db:reset",
         "db:studio": "pnpm --filter @makora/db db:studio",
         "db:generate": "pnpm --filter @makora/db db:generate",
         "compose:up": "docker compose up -d",
-        "compose:down": "docker compose down"
+        "compose:down": "docker compose down",
+        "storage:up": "docker compose up -d postgres-main postgres-chess redis",
+        "storage:down": "docker compose stop postgres-main postgres-chess redis",
+        "storage:logs": "docker compose logs -f postgres-main postgres-chess redis"
     },
     "devDependencies": {
         "@biomejs/biome": "^2.5.15",
