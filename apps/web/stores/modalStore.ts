@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type ModalName = "filterGame" | "addAccount" | "editAccount" | null;
+export type ModalName = "filterGame" | "filterInsights" | "addAccount" | "editAccount" | null;
 
 interface ModalData {
     accountId?: string;
