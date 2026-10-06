@@ -20,6 +20,12 @@ app.post("/classify", async (c) => {
         return c.json({ error: "Expected JSON body { pgn: string }" }, 400);
     }
 
+    if (openings.size === 0) {
+        const fresh = await loadOpenings();
+        for (const [fen, opening] of fresh) openings.set(fen, opening);
+        console.log(`[openings] reloaded ${openings.size} positions`);
+    }
+
     try {
         return c.json(classify(openings, body.pgn));
     } catch {

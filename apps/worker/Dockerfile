@@ -1,6 +1,6 @@
 FROM node:22-slim AS builder
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm@10.23.0
 
 WORKDIR /app
 
@@ -14,6 +14,13 @@ RUN pnpm db:generate
 
 RUN pnpm --filter worker --prod --legacy deploy /app/deploy/worker
 
+# pnpm deploy respects .gitignore, so the Prisma generated clients are missing.
+# Copy them into every deployed @makora/db copy (store layout varies by pnpm version).
+RUN for d in $(find /app/deploy/worker/node_modules -type d -path "*@makora/db"); do \
+        cp -r /app/packages/db/main/generated "$d/main/generated"; \
+        cp -r /app/packages/db/chess/generated "$d/chess/generated"; \
+    done
+
 FROM oven/bun:slim AS runner
 
 ARG INSTALL_STOCKFISH=false
@@ -23,7 +30,5 @@ RUN if [ "$INSTALL_STOCKFISH" = "true" ]; then apt-get update && apt-get install
 WORKDIR /app/apps/worker
 
 COPY --from=builder /app/deploy/worker ./
-COPY --from=builder /app/packages/db/main/generated ./node_modules/@makora/db/main/generated
-COPY --from=builder /app/packages/db/chess/generated ./node_modules/@makora/db/chess/generated
 
 CMD ["bun", "src/sync.worker.ts"]

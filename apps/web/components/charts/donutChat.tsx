@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { AnimatePresence, motion } from "framer-motion";
 import { normalizeEnum } from "@/utils/normalizeEnum";
@@ -8,6 +9,7 @@ import { normalizeEnum } from "@/utils/normalizeEnum";
 interface DonutChartProps {
     title: string;
     data: Array<{ name: string; value: number }>;
+    getHref?: (name: string) => string;
 }
 
 interface CustomTooltipProps {
@@ -35,7 +37,8 @@ function CustomTooltip({ active, payload, total, onDataChange }: CustomTooltipPr
     return null;
 }
 
-export function DonutChart({ title, data }: DonutChartProps) {
+export function DonutChart({ title, data, getHref }: DonutChartProps) {
+    const router = useRouter();
     const [activeData, setActiveData] = useState<{ name: string; value: number; percentage: number } | null>(null);
 
     const handleDataChange = useCallback((data: { name: string; value: number; percentage: number } | null) => {
@@ -94,7 +97,13 @@ export function DonutChart({ title, data }: DonutChartProps) {
                         cy="50%"
                         innerRadius={70}
                         outerRadius={100}
-                        paddingAngle={5}>
+                        paddingAngle={5}
+                        className={getHref ? "cursor-pointer" : undefined}
+                        onClick={(datum) => {
+                            const name = (datum as unknown as { name?: unknown }).name;
+                            if (getHref && typeof name === "string") router.push(getHref(name) as "/games");
+                        }}
+                    >
                         {data.map((entry, index) => (
                             <Cell
                                 key={entry.name}

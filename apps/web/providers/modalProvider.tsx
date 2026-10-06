@@ -3,6 +3,7 @@
 import { AddAccount } from "@/components/modals/addAccount";
 import { EditAccount } from "@/components/modals/editAccount";
 import { FilterGame } from "@/components/modals/filterGame";
+import { FilterInsights } from "@/components/modals/filterInsights";
 
 export const ModalProvider = () => {
   return (
@@ -10,6 +11,7 @@ export const ModalProvider = () => {
         <AddAccount />
         <EditAccount />
         <FilterGame />
+        <FilterInsights />
       </>
     )
 };
