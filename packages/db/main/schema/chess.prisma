@@ -26,6 +26,7 @@ model Game {
   date        DateTime?
   timeControl TimeControl
   opening     String
+  eco         String?
   moveCount   Int
   termination Termination
   gamePhase   GamePhase

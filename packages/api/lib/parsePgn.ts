@@ -9,6 +9,7 @@ export interface ParsedPgn {
     date: Date | null;
     timeControl: TimeControl;
     opening: string;
+    eco: string | null;
     moveCount: number;
     termination: Termination;
     gamePhase: GamePhase;
@@ -85,7 +86,9 @@ const getDate = (headers: Record<string, string>): Date | null => {
     return new Date(Date.UTC(year, month - 1, day, hour, min, sec));
 };
 
-const getOpening = async (pgn: string): Promise<string> => {
+const getOpening = async (pgn: string): Promise<{ name: string; eco: string | null }> => {
+    const unknown = { name: "Unknown Opening", eco: null as string | null };
+
     try {
         const res = await fetch(`${process.env.OPENINGS_URL ?? "http://localhost:4001"}/classify`, {
             method: "POST",
@@ -96,14 +99,17 @@ const getOpening = async (pgn: string): Promise<string> => {
 
         if (!res.ok) {
             console.warn(`Openings service responded with status ${res.status}, falling back to Unknown Opening`);
-            return "Unknown Opening";
+            return unknown;
         }
 
-        const data = (await res.json()) as { name?: unknown };
-        return typeof data.name === "string" ? data.name : "Unknown Opening";
+        const data = (await res.json()) as { name?: unknown; eco?: unknown };
+        return {
+            name: typeof data.name === "string" ? data.name : unknown.name,
+            eco: typeof data.eco === "string" ? data.eco : null,
+        };
     } catch (error) {
         console.warn("Openings service unreachable, falling back to Unknown Opening:", error);
-        return "Unknown Opening";
+        return unknown;
     }
 };
 
@@ -134,13 +140,16 @@ export const parsePgn = async ({
         return { parsedPgn: null };
     }
 
+    const { name: opening, eco } = await getOpening(pgn);
+
     const parsedPgn: ParsedPgn = {
         moves,
         url: getUrl(headers),
         opponent: getOpponent(color, headers),
         date: getDate(headers),
         timeControl: getTimeControl(headers.TimeControl as string),
-        opening: await getOpening(pgn),
+        opening,
+        eco,
         moveCount,
         termination: getTermination(pgn, headers),
         gamePhase: getGamePhase(moveCount),
