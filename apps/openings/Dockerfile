@@ -1,6 +1,6 @@
 FROM node:22-slim AS builder
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm@10.23.0
 
 WORKDIR /app
 
@@ -14,13 +14,18 @@ RUN pnpm db:generate
 
 RUN pnpm --filter openings --prod --legacy deploy /app/deploy/openings
 
+# pnpm deploy respects .gitignore, so the Prisma generated clients are missing.
+# Copy them into every deployed @makora/db copy (store layout varies by pnpm version).
+RUN for d in $(find /app/deploy/openings/node_modules -type d -path "*@makora/db"); do \
+        cp -r /app/packages/db/main/generated "$d/main/generated"; \
+        cp -r /app/packages/db/chess/generated "$d/chess/generated"; \
+    done
+
 FROM oven/bun:slim AS runner
 
 WORKDIR /app/apps/openings
 
 COPY --from=builder /app/deploy/openings ./
-COPY --from=builder /app/packages/db/main/generated ./node_modules/@makora/db/main/generated
-COPY --from=builder /app/packages/db/chess/generated ./node_modules/@makora/db/chess/generated
 
 EXPOSE 4001
 
