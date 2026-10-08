@@ -4,6 +4,9 @@ RUN npm install -g pnpm@10.23.0
 
 WORKDIR /app
 
+ARG NEXT_PUBLIC_API_URL=""
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 COPY . .
