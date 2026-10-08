@@ -36,6 +36,8 @@ jobs:
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
           tags: |
             ghcr.io/anav5704/makora-web:latest
             ghcr.io/anav5704/makora-web:${{ github.sha }}

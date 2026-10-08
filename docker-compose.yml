@@ -12,6 +12,7 @@ services:
       - REDIS_URL=redis://redis:6379
       - MAIN_DATABASE_URL=postgres://postgres:postgres@postgres-main:5432/main_db
       - CHESS_DATABASE_URL=postgres://postgres:postgres@postgres-chess:5432/chess_db
+      - API_URL=http://api:4000
     depends_on:
       postgres-main:
         condition: service_healthy
