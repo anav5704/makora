@@ -1,69 +1,15 @@
 import { Color, db, GamePhase, JobStatus, Platform, Termination, TimeControl } from "@makora/db";
-import { getAnalysisQueue, getSyncQueue, type SyncAccountJob } from "@makora/queue";
+import { getAnalysisQueue } from "@makora/queue";
 import { Chess } from "chess.js";
 import { z } from "zod";
 import { PAGE_SIZE } from "../../const";
 import { protectedProcedure, router } from "../index";
+import { enqueueSyncJobs } from "../jobs/enqueue-sync";
 import { failStaleJobs } from "../jobs/stale-jobs";
 
 export const chessRouter = router({
     syncGames: protectedProcedure.mutation(async ({ ctx }) => {
-        const userId = ctx.session.user.id;
-
-        await failStaleJobs(userId);
-
-        const accounts = await db.main.chessAccount.findMany({
-            where: {
-                userId,
-            },
-            select: {
-                id: true,
-                platform: true,
-                username: true,
-                syncedAt: true,
-            },
-        });
-
-        const jobIds: string[] = [];
-
-        for (const account of accounts) {
-            const inFlight = await db.main.job.findFirst({
-                where: {
-                    userId,
-                    type: "SYNC_ACCOUNT",
-                    status: { in: [JobStatus.QUEUED, JobStatus.ACTIVE] },
-                    payload: { path: ["account", "id"], equals: account.id },
-                },
-                select: { id: true },
-            });
-
-            if (inFlight) {
-                jobIds.push(inFlight.id);
-                continue;
-            }
-
-            const input: SyncAccountJob = {
-                userId,
-                account: {
-                    id: account.id,
-                    platform: account.platform,
-                    username: account.username,
-                    syncedAt: account.syncedAt?.toISOString() ?? null,
-                },
-            };
-
-            const job = await db.main.job.create({
-                data: {
-                    type: "SYNC_ACCOUNT",
-                    userId,
-                    payload: input,
-                },
-            });
-
-            await getSyncQueue().add("sync-account", input, { jobId: job.id });
-
-            jobIds.push(job.id);
-        }
+        const jobIds = await enqueueSyncJobs(ctx.session.user.id);
 
         return { jobIds };
     }),
@@ -254,6 +200,27 @@ export const chessRouter = router({
           error: true,
           updatedAt: true,
         }
+      })
+    }),
+    getActiveJobs: protectedProcedure
+    .query(async ({ ctx }) => {
+      return db.main.job.findMany({
+        where: {
+          userId: ctx.session.user.id,
+          status: { in: [JobStatus.QUEUED, JobStatus.ACTIVE] },
+        },
+        select: {
+          id: true,
+          type: true,
+          status: true,
+          progress: true,
+          error: true,
+          updatedAt: true,
+          payload: true,
+        },
+        orderBy: {
+          updatedAt: "desc",
+        },
       })
     }),
     updateNotes: protectedProcedure

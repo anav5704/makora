@@ -7,6 +7,12 @@ WORKDIR /app
 ARG NEXT_PUBLIC_API_URL=""
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
+# NOTE: next.config.ts rewrites() is evaluated at build time and baked into
+# the routes manifest, so the internal api address must be a build-arg.
+# It is the same in every compose network (service name `api`).
+ARG API_URL="http://api:4000"
+ENV API_URL=$API_URL
+
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 COPY . .
