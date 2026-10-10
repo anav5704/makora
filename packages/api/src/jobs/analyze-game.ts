@@ -38,6 +38,7 @@ export async function analyzeGame(input: AnalyzeGameJob, jobId: string, onProgre
             select: {
                 moves: true,
                 color: true,
+                timeControl: true,
             },
         });
 
@@ -49,7 +50,7 @@ export async function analyzeGame(input: AnalyzeGameJob, jobId: string, onProgre
             return;
         }
 
-        const evalResult = await getEval(game.moves, game.color, (completed, total) =>
+        const evalResult = await getEval(game.moves, game.color, game.timeControl, (completed, total) =>
             reportProgress(total ? (completed / total) * 100 : 0),
         );
 

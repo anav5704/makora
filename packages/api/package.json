@@ -27,6 +27,7 @@
         "bullmq": "catalog:queue",
         "@trpc/client": "catalog:trpc",
         "@trpc/server": "catalog:trpc",
+        "@prisma/client": "catalog:prisma",
         "chess.js": "catalog:chess",
         "dotenv": "catalog:dotenv",
         "zod": "catalog:zod"

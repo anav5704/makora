@@ -1,5 +1,6 @@
 import type { ChildProcessWithoutNullStreams } from "node:child_process";
 import { spawn } from "node:child_process";
+import type { TimeControl } from "@makora/db";
 import { Chess } from "chess.js";
 
 interface RawStockfishResult {
@@ -21,80 +22,35 @@ interface EvalResult {
     accuracy: number;
 }
 
+interface Position {
+    fen: string;
+    blackToMove: boolean;
+}
+
+// Rapid and classical get the deep search; bullet and blitz are short-form games
+// where extra depth does not move the accuracy metric but costs a lot of time.
+const DEPTH_BY_TIME_CONTROL: Record<TimeControl, number> = {
+    BULLET: 10,
+    BLITZ: 12,
+    RAPID: 16,
+    CLASSICAL: 18,
+};
+
+// Each engine is single-threaded and they contend for the same cores, so N
+// engines finish a game far sooner than one N-threaded engine. Tuned for a
+// 4-core host that is also running the API and Postgres.
+const ENGINE_COUNT = 3;
+
+// Deliberately well above the old 10s: several engines sharing cores makes any
+// given position slower than it would be alone, and a timeout costs the job.
+const POSITION_TIMEOUT_MS = 20_000;
+
 const calculateWinPercent = (centipawns: number): number => {
     return 50 + 50 * (2 / (1 + Math.exp(-0.00368208 * centipawns)) - 1);
 };
 
 const calculateAccuracy = (winBefore: number, winAfter: number): number => {
     return 103.1668 * Math.exp(-0.04354 * (winBefore - winAfter)) - 3.1669;
-};
-
-const getStockfishResult = async (
-    stockfish: ChildProcessWithoutNullStreams,
-    fen: string,
-    board: Chess,
-): Promise<RawStockfishResult> => {
-    return new Promise((resolve, reject) => {
-        let evaluation: number | undefined;
-        let bestMove: string | undefined;
-        let isMate = false;
-        let mateIn: number | undefined;
-
-        const timeout = setTimeout(() => {
-            stockfish.kill();
-            reject(new Error("Stockfish timeout"));
-        }, 10000);
-
-        const onData = (data: Buffer) => {
-            const output = data.toString();
-            const lines = output.split("\n");
-
-            for (const line of lines) {
-                const cpMatch = line.match(/score cp (-?\d+)/);
-                if (cpMatch) {
-                    evaluation = parseInt(cpMatch[1]!);
-                    if (board.turn() === "b") evaluation *= -1;
-                    isMate = false;
-                }
-
-                const mateMatch = line.match(/score mate (-?\d+)/);
-                if (mateMatch) {
-                    const mateInRaw = parseInt(mateMatch[1]!);
-                    mateIn = Math.abs(mateInRaw);
-                    evaluation = mateInRaw > 0 ? 32767 : -32767;
-                    if (board.turn() === "b") evaluation *= -1;
-                    isMate = true;
-                }
-
-                const bestMoveMatch = line.match(/bestmove (.+)/);
-                if (bestMoveMatch) {
-                    bestMove = bestMoveMatch[1]!;
-                    clearTimeout(timeout);
-                    stockfish.stdout.off("data", onData);
-                    if (evaluation !== undefined && bestMove !== undefined) {
-                        resolve({
-                            evaluation: evaluation!,
-                            bestMove: bestMove!,
-                            isMate,
-                            mateIn,
-                        });
-                    } else {
-                        reject(new Error("Failed to parse evaluation or best move"));
-                    }
-                }
-            }
-        };
-
-        stockfish.stdout.on("data", onData);
-
-        stockfish.on("error", (err) => {
-            clearTimeout(timeout);
-            reject(err);
-        });
-
-        stockfish.stdin.write(`position fen ${fen}\n`);
-        stockfish.stdin.write("go depth 20\n");
-    });
 };
 
 const formatEval = (evaluation: number, isMate: boolean, mateIn?: number): string => {
@@ -105,44 +61,255 @@ const formatEval = (evaluation: number, isMate: boolean, mateIn?: number): strin
     return evalInPawns >= 0 ? `+${evalInPawns.toFixed(1)}` : evalInPawns.toFixed(1);
 };
 
+/**
+ * A single single-threaded Stockfish process, reused across positions.
+ *
+ * A position that times out kills this engine and marks it dead; the caller is
+ * responsible for starting a fresh one rather than handing the dead process to
+ * the next position.
+ */
+class StockfishEngine {
+    private process: ChildProcessWithoutNullStreams | null = null;
+    private dead = false;
+
+    get isDead(): boolean {
+        return this.dead;
+    }
+
+    async start(): Promise<void> {
+        if (this.process && !this.dead) return;
+
+        const proc = spawn("stockfish");
+        proc.setMaxListeners(32);
+        this.process = proc;
+        this.dead = false;
+
+        await new Promise<void>((resolve, reject) => {
+            const onData = (data: Buffer) => {
+                if (data.toString().includes("readyok")) {
+                    proc.stdout.off("data", onData);
+                    proc.off("error", onError);
+                    resolve();
+                }
+            };
+
+            const onError = (err: Error) => {
+                proc.stdout.off("data", onData);
+                this.dead = true;
+                reject(err);
+            };
+
+            proc.stdout.on("data", onData);
+            proc.once("error", onError);
+
+            proc.stdin.write("uci\n");
+            proc.stdin.write("setoption name Threads value 1\n");
+            proc.stdin.write("setoption name Hash value 16\n");
+            proc.stdin.write("isready\n");
+        });
+    }
+
+    async analyze(position: Position, depth: number): Promise<RawStockfishResult> {
+        const proc = this.process;
+        if (!proc || this.dead) throw new Error("Stockfish is not running");
+
+        return new Promise<RawStockfishResult>((resolve, reject) => {
+            let evaluation: number | undefined;
+            let bestMove: string | undefined;
+            let isMate = false;
+            let mateIn: number | undefined;
+            let settled = false;
+            let timer: ReturnType<typeof setTimeout> | undefined;
+
+            const cleanup = () => {
+                if (timer) clearTimeout(timer);
+                proc.stdout.off("data", onData);
+                proc.off("error", onError);
+                proc.off("exit", onExit);
+            };
+
+            const succeed = () => {
+                if (settled) return;
+                settled = true;
+                cleanup();
+                resolve({ evaluation: evaluation as number, bestMove: bestMove as string, isMate, mateIn });
+            };
+
+            const fail = (error: Error) => {
+                if (settled) return;
+                settled = true;
+                cleanup();
+                reject(error);
+            };
+
+            // A wedged engine cannot be reused, so take it down. The pool starts
+            // a replacement, and only this position fails.
+            const onTimeout = () => {
+                this.dead = true;
+                proc.kill();
+                fail(new Error(`Stockfish timed out after ${POSITION_TIMEOUT_MS}ms`));
+            };
+
+            const onError = (err: Error) => {
+                this.dead = true;
+                fail(err);
+            };
+
+            const onExit = () => {
+                this.dead = true;
+                fail(new Error("Stockfish exited before returning a best move"));
+            };
+
+            const onData = (data: Buffer) => {
+                for (const line of data.toString().split("\n")) {
+                    const cpMatch = line.match(/score cp (-?\d+)/);
+                    if (cpMatch) {
+                        evaluation = parseInt(cpMatch[1] as string, 10);
+                        if (position.blackToMove) evaluation *= -1;
+                        isMate = false;
+                    }
+
+                    const mateMatch = line.match(/score mate (-?\d+)/);
+                    if (mateMatch) {
+                        const mateInRaw = parseInt(mateMatch[1] as string, 10);
+                        mateIn = Math.abs(mateInRaw);
+                        evaluation = mateInRaw > 0 ? 32767 : -32767;
+                        if (position.blackToMove) evaluation *= -1;
+                        isMate = true;
+                    }
+
+                    if (line.match(/bestmove (.+)/)) {
+                        bestMove = line.match(/bestmove (.+)/)?.[1]?.trim();
+                        if (evaluation === undefined || bestMove === undefined) {
+                            fail(new Error("Failed to parse evaluation or best move"));
+                            return;
+                        }
+                        succeed();
+                        return;
+                    }
+                }
+            };
+
+            timer = setTimeout(onTimeout, POSITION_TIMEOUT_MS);
+
+            proc.stdout.on("data", onData);
+            proc.once("error", onError);
+            proc.once("exit", onExit);
+
+            proc.stdin.write(`position fen ${position.fen}\n`);
+            proc.stdin.write(`go depth ${depth}\n`);
+        });
+    }
+
+    async close(): Promise<void> {
+        const proc = this.process;
+        this.process = null;
+        this.dead = true;
+        if (!proc) return;
+
+        proc.stdout.removeAllListeners("data");
+        proc.kill();
+    }
+}
+
+/**
+ * Walks the game once to materialise every position Stockfish needs.
+ *
+ * The positions only depend on the move list, so they can all be gathered up
+ * front and searched concurrently instead of one ply at a time.
+ */
+const collectPositions = (moves: string[]): Position[] => {
+    const board = new Chess();
+    const positions: Position[] = [];
+
+    for (const move of moves) {
+        positions.push({ fen: board.fen(), blackToMove: board.turn() === "b" });
+        board.move(move);
+        positions.push({ fen: board.fen(), blackToMove: board.turn() === "b" });
+    }
+
+    return positions;
+};
+
+const analyzePositions = async (
+    positions: Position[],
+    depth: number,
+    onPositionAnalyzed?: () => void,
+): Promise<RawStockfishResult[]> => {
+    const results = new Array<RawStockfishResult>(positions.length);
+    if (positions.length === 0) return results;
+
+    const failure: { current: Error | null } = { current: null };
+    let cursor = 0;
+
+    const worker = async () => {
+        const engine = new StockfishEngine();
+
+        try {
+            await engine.start();
+
+            for (;;) {
+                // Another engine already failed; stop pulling new work.
+                if (failure.current) return;
+
+                const index = cursor++;
+                if (index >= positions.length) return;
+
+                try {
+                    if (engine.isDead) await engine.start();
+                    results[index] = await engine.analyze(positions[index] as Position, depth);
+                    onPositionAnalyzed?.();
+                } catch (error) {
+                    failure.current ??= error instanceof Error ? error : new Error(String(error));
+                    return;
+                }
+            }
+        } catch (error) {
+            failure.current ??= error instanceof Error ? error : new Error(String(error));
+        } finally {
+            await engine.close();
+        }
+    };
+
+    const workerCount = Math.min(ENGINE_COUNT, positions.length);
+    await Promise.all(Array.from({ length: workerCount }, worker));
+
+    if (failure.current) throw failure.current;
+
+    return results;
+};
+
 export const getEval = async (
     moves: string[],
     playerColor: "WHITE" | "BLACK",
+    timeControl: TimeControl,
     onProgress?: (completed: number, total: number) => void,
 ): Promise<EvalResult> => {
-    const board = new Chess();
+    const depth = DEPTH_BY_TIME_CONTROL[timeControl];
+    const positions = collectPositions(moves);
+
+    let analyzed = 0;
+    const reportPosition = () => {
+        analyzed += 1;
+        // Two positions per move, and the callback speaks in moves.
+        onProgress?.(Math.min(Math.floor(analyzed / 2), moves.length), moves.length);
+    };
+
+    const raw = await analyzePositions(positions, depth, reportPosition);
+
     const results: StockfishResult[] = [];
-    const stockfish = spawn("stockfish");
-    stockfish.setMaxListeners(20);
 
-    await new Promise<void>((resolve, reject) => {
-        const onData = (data: Buffer) => {
-            if (data.toString().includes("readyok")) {
-                stockfish.stdout.off("data", onData);
-                resolve();
-            }
-        };
-        stockfish.stdout.on("data", onData);
-        stockfish.on("error", reject);
-        stockfish.stdin.write("uci\n");
-        stockfish.stdin.write("setoption name Threads value 2\n");
-        stockfish.stdin.write("isready\n");
-    });
+    for (const [index] of moves.entries()) {
+        const resultBefore = raw[index * 2] as RawStockfishResult;
+        const resultAfter = raw[index * 2 + 1] as RawStockfishResult;
+        const isWhiteMove = !(positions[index * 2] as Position).blackToMove;
 
-    for (const [index, move] of moves.entries()) {
-        const fenBefore = board.fen();
-        const isWhiteMove = board.turn() === "w";
-        const resultBefore = await getStockfishResult(stockfish, fenBefore, board);
         const winBefore = resultBefore.isMate
             ? resultBefore.evaluation > 0
                 ? 100
                 : 0
             : calculateWinPercent(resultBefore.evaluation);
 
-        board.move(move);
-
-        const fenAfter = board.fen();
-        const resultAfter = await getStockfishResult(stockfish, fenAfter, board);
         const winAfter = resultAfter.isMate
             ? resultAfter.evaluation > 0
                 ? 100
@@ -155,27 +322,17 @@ export const getEval = async (
         const accuracy = calculateAccuracy(movingSideWinBefore, movingSideWinAfter);
         const postMoveEval = formatEval(resultAfter.evaluation, resultAfter.isMate, resultAfter.mateIn);
 
-        console.log(
-            `Accuracy: ${Math.round(accuracy * 100) / 100}, Win drop: ${Math.round(winDrop * 100) / 100}, Eval: ${postMoveEval}, Best move: ${resultAfter.bestMove}`,
-        );
-
         results.push({
             accuracy: Math.round(accuracy * 100) / 100,
             postMoveEval,
             bestMove: resultAfter.bestMove,
             winDrop: Math.round(winDrop * 100) / 100,
         });
-
-        onProgress?.(index + 1, moves.length);
     }
 
-    stockfish.stdin.write("quit\n");
-
-    // Calculate accuracy for the specified player color
     const playerMoves: number[] = [];
 
     results.forEach((result, index) => {
-        // White plays on even indices (0, 2, 4...), Black on odd (1, 3, 5...)
         const isWhiteMove = index % 2 === 0;
         const isPlayerMove = (playerColor === "WHITE" && isWhiteMove) || (playerColor === "BLACK" && !isWhiteMove);
 
@@ -184,12 +341,13 @@ export const getEval = async (
         }
     });
 
-    const accuracy = playerMoves.length > 0
-        ? Math.round((playerMoves.reduce((sum, acc) => sum + acc, 0) / playerMoves.length) * 100) / 100
-        : 0;
+    const accuracy =
+        playerMoves.length > 0
+            ? Math.round((playerMoves.reduce((sum, acc) => sum + acc, 0) / playerMoves.length) * 100) / 100
+            : 0;
 
     return {
         results,
-        accuracy
+        accuracy,
     };
 };
