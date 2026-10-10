@@ -1,6 +1,7 @@
 import { db, Platform } from "@makora/db";
 import { z } from "zod";
 import { protectedProcedure, router } from "../index";
+import { enqueueSyncJobs } from "../jobs/enqueue-sync";
 
 export const userRouter = router({
     onboard: protectedProcedure
@@ -29,6 +30,8 @@ export const userRouter = router({
                     id: userId,
                 },
             });
+
+            await enqueueSyncJobs(userId);
         }),
   getAccounts: protectedProcedure
     .query(async ({ ctx }) => {
@@ -64,6 +67,8 @@ export const userRouter = router({
           userId,
         },
       });
+
+      await enqueueSyncJobs(userId);
     }),
   updateAccount: protectedProcedure
     .input(

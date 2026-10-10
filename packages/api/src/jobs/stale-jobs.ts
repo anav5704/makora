@@ -1,6 +1,6 @@
 import { db, JobStatus } from "@makora/db";
 
-const STALE_AFTER_MINUTES = 60;
+const STALE_AFTER_MINUTES = 10;
 
 export async function failStaleJobs(userId: string): Promise<void> {
     await db.main.job.updateMany({
