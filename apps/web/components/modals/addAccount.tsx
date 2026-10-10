@@ -17,7 +17,8 @@ export const AddAccount = () => {
     const { mutateAsync, isPending } = useMutation(
         api.user.addAccount.mutationOptions({
             onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: api.user.getAccounts.queryKey() });
+                queryClient.invalidateQueries({ queryKey: api.user.getAccounts.pathKey() });
+                queryClient.invalidateQueries({ queryKey: api.chess.getActiveJobs.pathKey() });
                 setUsername("");
                 setSelectedPlatform(platforms[0]);
                 closeModal();

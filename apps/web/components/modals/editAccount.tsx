@@ -31,7 +31,7 @@ export const EditAccount = () => {
     const { mutateAsync: updateAccount, isPending: isUpdating } = useMutation(
         api.user.updateAccount.mutationOptions({
             onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: api.user.getAccounts.queryKey() });
+                queryClient.invalidateQueries({ queryKey: api.user.getAccounts.pathKey() });
                 setConfirmDelete(false);
                 closeModal();
             },
@@ -41,7 +41,7 @@ export const EditAccount = () => {
     const { mutateAsync: deleteAccount, isPending: isDeleting } = useMutation(
         api.user.deleteAccount.mutationOptions({
             onSuccess: () => {
-                queryClient.invalidateQueries({ queryKey: api.user.getAccounts.queryKey() });
+                queryClient.invalidateQueries({ queryKey: api.user.getAccounts.pathKey() });
                 setConfirmDelete(false);
                 closeModal();
             },

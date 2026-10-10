@@ -1,13 +1,14 @@
 "use client";
 
 import type { Color, GamePhase, Platform, Termination, TimeControl } from "@makora/db";
-import { keepPreviousData, useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useMutation } from "@tanstack/react-query";
 import { useQueryState } from "nuqs";
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { GamesList } from "@/components/games/gamesList";
 import { Search } from "@/components/games/search";
 import { Loader } from "@/components/loader";
 import { Button } from "@/components/ui/button";
+import { useJobTracker } from "@/hooks/useJobTracker";
 import { api, queryClient } from "@/lib/trpc";
 import { useModalStore } from "@/stores/modalStore";
 // import { View } from "@/components/games/view";
@@ -24,51 +25,26 @@ export default function GamesPage() {
     const [reviewed] = useQueryState("reviewed");
     // const [view] = useQueryState("view")
 
-    const [syncJobIds, setSyncJobIds] = useState<string[] | null>(null);
+    const { progressOf, settled } = useJobTracker();
+
+    const syncProgress = progressOf((job) => job.type === "SYNC_ACCOUNT");
+    const isSyncing = syncProgress !== null;
+
+    const settledNonceRef = useRef(0);
+
+    useEffect(() => {
+        if (settled.nonce === settledNonceRef.current) return;
+        settledNonceRef.current = settled.nonce;
+        queryClient.invalidateQueries({ queryKey: api.chess.getGames.pathKey(), refetchType: "all" });
+    }, [settled]);
 
     const { mutateAsync, isPending } = useMutation(
         api.chess.syncGames.mutationOptions({
-            onSuccess: ({ jobIds }) => {
-                if (jobIds.length === 0) {
-                    queryClient.invalidateQueries({ queryKey: api.chess.getGames.queryKey() });
-                    return;
-                }
-                setSyncJobIds(jobIds);
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: api.chess.getActiveJobs.pathKey() });
             },
         }),
     );
-
-    const { data: syncJobs } = useQuery(
-        api.chess.getJobsStatus.queryOptions(
-            { jobIds: syncJobIds ?? [] },
-            {
-                enabled: !!syncJobIds && syncJobIds.length > 0,
-                refetchInterval: (query) => {
-                    const jobs = query.state.data ?? [];
-                    if (jobs.length === 0) return 2000;
-                    const done = jobs.every((job) => job.status === "COMPLETED" || job.status === "FAILED");
-                    return done ? false : 2000;
-                },
-            },
-        ),
-    );
-
-    useEffect(() => {
-        if (!syncJobIds || syncJobIds.length === 0 || !syncJobs || syncJobs.length === 0) return;
-
-        const done = syncJobs.every((job) => job.status === "COMPLETED" || job.status === "FAILED");
-
-        if (done) {
-            queryClient.invalidateQueries({ queryKey: api.chess.getGames.queryKey() });
-            setSyncJobIds(null);
-        }
-    }, [syncJobs, syncJobIds]);
-
-    const syncedCount = (syncJobs ?? []).filter(
-        (job) => job.status === "COMPLETED" || job.status === "FAILED",
-    ).length;
-    const syncTotal = syncJobIds?.length ?? 0;
-    const isSyncing = syncJobIds !== null;
 
     const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } = useInfiniteQuery(
         api.chess.getGames.infiniteQueryOptions({
@@ -102,7 +78,7 @@ export default function GamesPage() {
                             <Search />
                             <Button className="border" variant="outline" label="Filter" loading={false} onClick={() => openModal("filterGame")} />
                             {/*<View />*/}
-                            <Button className="border" variant="outline" label={isSyncing ? `Syncing ${syncedCount}/${syncTotal}` : "Sync"} onClick={handleSync} loading={isPending || isSyncing} />
+                            <Button className="border" variant="outline" label={isSyncing ? `Syncing ${syncProgress}%` : "Sync"} onClick={handleSync} loading={isPending} tracking={isSyncing} />
                         </section>
 
                         {/*{view === "list" && (*/}
