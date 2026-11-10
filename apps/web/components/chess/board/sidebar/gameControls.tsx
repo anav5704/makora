@@ -1,7 +1,7 @@
 "use client";
 
 import type { Evaluation, Game } from "@makora/db";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { type Dispatch, type SetStateAction, useEffect, useRef } from "react";
 import { Controls } from "@/components/chess/board/controls";
 import { History } from "@/components/chess/board/history";
@@ -27,25 +27,28 @@ export const GameControls = ({
     setMoveIndex,
     onNavigate,
 }: GameControlsProps) => {
-  const { progressOf, settled } = useJobTracker();
+    const { progressOf, settled } = useJobTracker();
+    const { data: failedJobs } = useQuery(api.chess.getFailedJobs.queryOptions());
 
-  const analysisProgress = progressOf(
-    (job) => job.type === "ANALYZE_GAME" && (job.payload as { gameId?: string } | null)?.gameId === game.id,
-  );
-  const isAnalyzing = analysisProgress !== null;
+    const analysisProgress = progressOf(
+        (job) => job.type === "ANALYZE_GAME" && (job.payload as { gameId?: string } | null)?.gameId === game.id,
+    );
+    const isAnalyzing = analysisProgress !== null;
+    const failedAnalysis = failedJobs?.find((job) => job.type === "ANALYZE_GAME" && job.gameId === game.id) ?? null;
 
-  const settledNonceRef = useRef(0);
+    const settledNonceRef = useRef(0);
 
-  useEffect(() => {
-    if (settled.nonce === settledNonceRef.current) return;
-    settledNonceRef.current = settled.nonce;
-    queryClient.invalidateQueries({ queryKey: api.chess.getGames.pathKey(), refetchType: "all" });
-    queryClient.invalidateQueries({ queryKey: api.chess.getGame.pathKey(), refetchType: "all" });
-  }, [settled]);
+    useEffect(() => {
+        if (settled.nonce === settledNonceRef.current) return;
+        settledNonceRef.current = settled.nonce;
+        queryClient.invalidateQueries({ queryKey: api.chess.getGames.pathKey(), refetchType: "all" });
+        queryClient.invalidateQueries({ queryKey: api.chess.getGame.pathKey(), refetchType: "all" });
+    }, [settled]);
 
-  const { mutateAsync, isPending } = useMutation(
-    api.chess.analyzeGame.mutationOptions({
-             onSuccess: ({ jobId }) => {
+    const { mutateAsync, isPending } = useMutation(
+        api.chess.analyzeGame.mutationOptions({
+            onSuccess: ({ jobId }) => {
+                queryClient.invalidateQueries({ queryKey: api.chess.getFailedJobs.pathKey() });
                 if (jobId) {
                     queryClient.invalidateQueries({ queryKey: api.chess.getActiveJobs.pathKey() });
                     return;
@@ -53,40 +56,59 @@ export const GameControls = ({
                 queryClient.invalidateQueries({ queryKey: api.chess.getGames.pathKey(), refetchType: "all" });
                 queryClient.invalidateQueries({ queryKey: api.chess.getGame.pathKey(), refetchType: "all" });
             },
-      })
-  )
+        }),
+    );
 
-  return (
-      <>
-          <Details game={game} />
+    const handleAnalyze = async () => {
+        try {
+            await mutateAsync({ gameId: game.id });
+        } catch {
+            return;
+        }
+    };
 
-          <Controls positions={positions} moveIndex={moveIndex} setMoveIndex={setMoveIndex} />
+    return (
+        <>
+            <Details game={game} />
 
-          {game.evaluation ? (
-              <p className="p-5 text-center">Accuracy: {game.evaluation.accuracy}%</p>
+            <Controls positions={positions} moveIndex={moveIndex} setMoveIndex={setMoveIndex} />
+
+            {game.evaluation ? (
+                <p className="p-5 text-center">Accuracy: {game.evaluation.accuracy}%</p>
             ) : isAnalyzing ? (
-                <p className="p-5 text-center">
-                    {`Analyzing... ${analysisProgress}%`}
-                </p>
+                <p className="p-5 text-center">{`Analyzing... ${analysisProgress}%`}</p>
+            ) : failedAnalysis ? (
+                <div>
+                    <p className="px-5 pt-5 text-center text-sm text-rose-400">
+                        {failedAnalysis.error ?? "Analysis failed"}
+                    </p>
+                    <Button
+                        label="Retry"
+                        onClick={() => void handleAnalyze()}
+                        className="rounded-none p-5!"
+                        loading={isPending}
+                        variant="outline"
+                    />
+                </div>
             ) : (
                 <Button
-                      label="Computer Analysis"
-                      onClick={async () => mutateAsync({ gameId: game.id })}
-                      className="rounded-none p-5!"
-                      loading={isPending}
-                      variant="outline"
+                    label="Computer Analysis"
+                    onClick={() => void handleAnalyze()}
+                    className="rounded-none p-5!"
+                    loading={isPending}
+                    variant="outline"
                 />
             )}
 
-        <History
-              moves={moves}
-              moveIndex={moveIndex}
-              evalution={game.evaluation}
-              onNavigate={(i) => {
-                  if (onNavigate) onNavigate(i);
-                  else setMoveIndex?.(i);
-              }}
-          />
-      </>
+            <History
+                moves={moves}
+                moveIndex={moveIndex}
+                evalution={game.evaluation}
+                onNavigate={(i) => {
+                    if (onNavigate) onNavigate(i);
+                    else setMoveIndex?.(i);
+                }}
+            />
+        </>
     );
 };

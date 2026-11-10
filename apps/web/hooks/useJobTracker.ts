@@ -4,7 +4,7 @@ import type { AppRouter } from "@makora/api/routers/index";
 import { useQuery } from "@tanstack/react-query";
 import type { inferRouterOutputs } from "@trpc/server";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { api } from "@/lib/trpc";
+import { api, queryClient } from "@/lib/trpc";
 
 type RouterOutputs = inferRouterOutputs<AppRouter>;
 
@@ -36,7 +36,18 @@ export function useJobTracker() {
         const previousIds = previousIdsRef.current;
         previousIdsRef.current = currentIds;
 
-        if (previousIds === null || previousIds.size === 0) return;
+        if (previousIds === null) return;
+
+        const idsChanged =
+            previousIds.size !== currentIds.size ||
+            [...currentIds].some((id) => !previousIds.has(id)) ||
+            [...previousIds].some((id) => !currentIds.has(id));
+
+        if (!idsChanged) return;
+
+        queryClient.invalidateQueries({ queryKey: api.chess.getFailedJobs.pathKey() });
+
+        if (previousIds.size === 0) return;
 
         const settledIds = [...previousIds].filter((id) => !currentIds.has(id));
         if (settledIds.length === 0) return;
