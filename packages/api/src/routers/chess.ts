@@ -223,6 +223,54 @@ export const chessRouter = router({
         },
       })
     }),
+    getFailedJobs: protectedProcedure.query(async ({ ctx }) => {
+      const jobs = await db.main.job.findMany({
+        where: {
+          userId: ctx.session.user.id,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 200,
+        select: {
+          id: true,
+          type: true,
+          status: true,
+          error: true,
+          payload: true,
+        },
+      })
+
+      const seen = new Set<string>()
+      const failed: {
+        id: string
+        type: (typeof jobs)[number]["type"]
+        error: string | null
+        username: string | null
+        gameId: string | null
+      }[] = []
+
+      for (const job of jobs) {
+        const syncAccount = job.type === "SYNC_ACCOUNT" ? readSyncAccount(job.payload) : null
+        const gameId = job.type === "ANALYZE_GAME" ? readGameId(job.payload) : null
+        const key = syncAccount ? `sync:${syncAccount.id}` : gameId ? `analyze:${gameId}` : null
+
+        if (!key || seen.has(key)) continue
+        seen.add(key)
+
+        if (job.status !== JobStatus.FAILED) continue
+
+        failed.push({
+          id: job.id,
+          type: job.type,
+          error: job.error,
+          username: syncAccount?.username ?? null,
+          gameId,
+        })
+      }
+
+      return failed
+    }),
     updateNotes: protectedProcedure
     .input(
       z.object({
@@ -241,3 +289,24 @@ export const chessRouter = router({
         })
     })
 });
+
+function readSyncAccount(payload: unknown): { id: string; username: string } | null {
+  if (!payload || typeof payload !== "object") return null
+
+  const account = (payload as { account?: unknown }).account
+  if (!account || typeof account !== "object") return null
+
+  const id = (account as { id?: unknown }).id
+  const username = (account as { username?: unknown }).username
+
+  if (typeof id !== "string" || typeof username !== "string") return null
+
+  return { id, username }
+}
+
+function readGameId(payload: unknown): string | null {
+  if (!payload || typeof payload !== "object") return null
+
+  const gameId = (payload as { gameId?: unknown }).gameId
+  return typeof gameId === "string" ? gameId : null
+}
