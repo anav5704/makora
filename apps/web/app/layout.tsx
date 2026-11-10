@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { Inter_Tight } from "next/font/google";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { Suspense } from "react";
+import { Toaster } from "@/components/ui/toaster";
 import { ModalProvider } from "@/providers/modalProvider";
 import { QueryProvider } from "@/providers/queryProvider";
-import { Suspense } from "react";
 import "./globals.css";
 
 const interTight = Inter_Tight({
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                         <QueryProvider>
                             <ModalProvider />
                             {children}
+                            <Toaster />
                         </QueryProvider>
                     </NuqsAdapter>
                 </Suspense>

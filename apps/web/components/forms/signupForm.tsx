@@ -3,6 +3,7 @@
 import { Fieldset } from "@headlessui/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth";
@@ -17,26 +18,32 @@ export const SignupForm = () => {
     const router = useRouter();
 
     const handleSignup = async () => {
+        if (!name.trim() || !email.trim() || !password) {
+            toast.error("Fill in all the fields");
+            return;
+        }
+
         setLoading(true);
 
-        await authClient.signUp.email(
-            {
-                name: name,
-                email: email,
-                password: password,
-            },
-            {
-                onSuccess: () => {
-                    router.push("/onboarding");
-                    alert("Sign up successful");
-                },
-                onError: (error) => {
-                    alert("Error: " + error.error.message);
-                },
-            },
-        );
+        try {
+            const { error } = await authClient.signUp.email({
+                name,
+                email,
+                password,
+            });
 
-        setLoading(false);
+            if (error) {
+                toast.error(error.message || "Could not sign up");
+                return;
+            }
+
+            toast.success("Account created");
+            router.push("/onboarding");
+        } catch {
+            toast.error("Could not sign up");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (

@@ -3,9 +3,10 @@
 import { Fieldset } from "@headlessui/react";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Account, platforms } from "@/components/chess/account";
-import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
 import { api, queryClient } from "@/lib/trpc";
 import { useModalStore } from "@/stores/modalStore";
 
@@ -19,6 +20,7 @@ export const AddAccount = () => {
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: api.user.getAccounts.pathKey() });
                 queryClient.invalidateQueries({ queryKey: api.chess.getActiveJobs.pathKey() });
+                queryClient.invalidateQueries({ queryKey: api.chess.getFailedJobs.pathKey() });
                 setUsername("");
                 setSelectedPlatform(platforms[0]);
                 closeModal();
@@ -27,10 +29,19 @@ export const AddAccount = () => {
     );
 
     const handleAddAccount = async () => {
-        mutateAsync({
-            platform: selectedPlatform.value,
-            username,
-        });
+        if (username.trim().length < 2) {
+            toast.error("Username must be at least 2 characters");
+            return;
+        }
+
+        try {
+            await mutateAsync({
+                platform: selectedPlatform.value,
+                username,
+            });
+        } catch {
+            return;
+        }
     };
 
     return (
