@@ -50,7 +50,8 @@ const calculateWinPercent = (centipawns: number): number => {
 };
 
 const calculateAccuracy = (winBefore: number, winAfter: number): number => {
-    return 103.1668 * Math.exp(-0.04354 * (winBefore - winAfter)) - 3.1669;
+    const accuracy = 103.1668 * Math.exp(-0.04354 * (winBefore - winAfter)) - 3.1669;
+    return Math.min(100, Math.max(0, accuracy));
 };
 
 const formatEval = (evaluation: number, isMate: boolean, mateIn?: number): string => {
