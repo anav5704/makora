@@ -1,14 +1,17 @@
 "use client";
 
-import type { AppRouter } from "@makora/api/routers/index";
 import { useQuery } from "@tanstack/react-query";
-import type { inferRouterOutputs } from "@trpc/server";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, queryClient } from "@/lib/trpc";
 
-type RouterOutputs = inferRouterOutputs<AppRouter>;
-
-export type TrackedJob = RouterOutputs["chess"]["getActiveJobs"][number];
+// A hand-written shape, not the inferred router output. Next's production
+// typecheck treats that inferred output as infinitely deep once it is mapped.
+export interface TrackedJob {
+    id: string;
+    type: string;
+    progress: number;
+    payload: unknown;
+}
 
 const ACTIVE_POLL_INTERVAL_MS = 2000;
 const IDLE_POLL_INTERVAL_MS = 5000;
@@ -26,7 +29,7 @@ export function useJobTracker() {
         }),
     );
 
-    const jobs = useMemo(() => activeJobs ?? [], [activeJobs]);
+    const jobs = useMemo(() => (activeJobs ?? []) as unknown as TrackedJob[], [activeJobs]);
 
     const previousIdsRef = useRef<Set<string> | null>(null);
     const [settled, setSettled] = useState<SettledJobs>({ ids: [], nonce: 0 });
