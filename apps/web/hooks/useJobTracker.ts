@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api, queryClient } from "@/lib/trpc";
 
 // A hand-written shape, not the inferred router output. Next's production
@@ -9,8 +9,12 @@ import { api, queryClient } from "@/lib/trpc";
 export interface TrackedJob {
     id: string;
     type: string;
-    progress: number;
     payload: unknown;
+    username: string | null;
+    platform: string | null;
+    gamesSaved: number | null;
+    movesDone: number | null;
+    movesTotal: number | null;
 }
 
 const ACTIVE_POLL_INTERVAL_MS = 2000;
@@ -58,17 +62,5 @@ export function useJobTracker() {
         setSettled((previous) => ({ ids: settledIds, nonce: previous.nonce + 1 }));
     }, [jobs]);
 
-    const progressOf = useCallback(
-        (match: (job: TrackedJob) => boolean): number | null => {
-            const matching = jobs.filter(match);
-
-            if (matching.length === 0) return null;
-
-            const total = matching.reduce((sum, job) => sum + job.progress, 0);
-            return Math.round(total / matching.length);
-        },
-        [jobs],
-    );
-
-    return { jobs, settled, isTracking: jobs.length > 0, progressOf };
+    return { jobs, settled, isTracking: jobs.length > 0 };
 }
