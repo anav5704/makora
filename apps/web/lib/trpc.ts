@@ -1,19 +1,21 @@
 import type { AppRouter } from "@makora/api/routers/index";
-import { QueryCache, QueryClient } from "@tanstack/react-query";
+import { MutationCache, QueryClient } from "@tanstack/react-query";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
+import { toast } from "sonner";
+
+const mutationErrorMessage = (error: unknown): string => {
+    if (error instanceof Error && error.message.trim().length > 0) {
+        return error.message;
+    }
+
+    return "Something went wrong";
+};
 
 export const queryClient = new QueryClient({
-    queryCache: new QueryCache({
+    mutationCache: new MutationCache({
         onError: (error) => {
-            // toast.error(error.message, {
-            //     action: {
-            //         label: "retry",
-            //         onClick: () => {
-            //             queryClient.invalidateQueries();
-            //         },
-            //     },
-            // });
+            toast.error(mutationErrorMessage(error));
         },
     }),
 });

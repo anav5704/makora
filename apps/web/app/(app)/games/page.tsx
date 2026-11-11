@@ -1,11 +1,12 @@
 "use client";
 
 import type { Color, GamePhase, Platform, Termination, TimeControl } from "@makora/db";
-import { keepPreviousData, useInfiniteQuery, useMutation } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import { useQueryState } from "nuqs";
 import { useEffect, useRef } from "react";
 import { GamesList } from "@/components/games/gamesList";
 import { Search } from "@/components/games/search";
+import { SyncFailures } from "@/components/jobs/sync-failures";
 import { Loader } from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import { useJobTracker } from "@/hooks/useJobTracker";
@@ -26,9 +27,11 @@ export default function GamesPage() {
     // const [view] = useQueryState("view")
 
     const { progressOf, settled } = useJobTracker();
+    const { data: failedJobs } = useQuery(api.chess.getFailedJobs.queryOptions());
 
     const syncProgress = progressOf((job) => job.type === "SYNC_ACCOUNT");
     const isSyncing = syncProgress !== null;
+    const syncFailures = (failedJobs ?? []).filter((job) => job.type === "SYNC_ACCOUNT");
 
     const settledNonceRef = useRef(0);
 
@@ -42,30 +45,38 @@ export default function GamesPage() {
         api.chess.syncGames.mutationOptions({
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: api.chess.getActiveJobs.pathKey() });
+                queryClient.invalidateQueries({ queryKey: api.chess.getFailedJobs.pathKey() });
             },
         }),
     );
 
     const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } = useInfiniteQuery(
-        api.chess.getGames.infiniteQueryOptions({
-            search: search || undefined,
-            platform: platform as Platform || undefined,
-            termination: termination as Termination || undefined,
-            timeControl: timeControl as TimeControl || undefined,
-            gamePhase: gamePhase as GamePhase || undefined,
-            color: color as Color || undefined,
-            reviewed: reviewed === "true" ? true : reviewed === "false" ? false : undefined,
-        },
-        {
-          getNextPageParam: (lastPage) => lastPage.cursor,
-          placeholderData: keepPreviousData,
-        }
-      )
+        api.chess.getGames.infiniteQueryOptions(
+            {
+                search: search || undefined,
+                platform: (platform as Platform) || undefined,
+                termination: (termination as Termination) || undefined,
+                timeControl: (timeControl as TimeControl) || undefined,
+                gamePhase: (gamePhase as GamePhase) || undefined,
+                color: (color as Color) || undefined,
+                reviewed: reviewed === "true" ? true : reviewed === "false" ? false : undefined,
+            },
+            {
+                getNextPageParam: (lastPage) => lastPage.cursor,
+                placeholderData: keepPreviousData,
+            },
+        ),
     );
 
-    const games = data?.pages.flatMap((page) => page.games) ?? []
+    const games = data?.pages.flatMap((page) => page.games) ?? [];
 
-    const handleSync = async () => mutateAsync();
+    const handleSync = async () => {
+        try {
+            await mutateAsync();
+        } catch {
+            return;
+        }
+    };
 
     return (
         <main>
@@ -76,19 +87,38 @@ export default function GamesPage() {
                     <header className="z-10 sticky top-0 bg-zinc-900 border-b border-zinc-800">
                         <section className="grid grid-cols-5 gap-5 p-5 border-b border-zinc-800">
                             <Search />
-                            <Button className="border" variant="outline" label="Filter" loading={false} onClick={() => openModal("filterGame")} />
+                            <Button
+                                className="border"
+                                variant="outline"
+                                label="Filter"
+                                loading={false}
+                                onClick={() => openModal("filterGame")}
+                            />
                             {/*<View />*/}
-                            <Button className="border" variant="outline" label={isSyncing ? `Syncing ${syncProgress}%` : "Sync"} onClick={handleSync} loading={isPending} tracking={isSyncing} />
+                            <Button
+                                className="border"
+                                variant="outline"
+                                label={isSyncing ? `Syncing ${syncProgress}%` : "Sync"}
+                                onClick={handleSync}
+                                loading={isPending}
+                                tracking={isSyncing}
+                            />
                         </section>
 
+                        <SyncFailures
+                            jobs={syncFailures}
+                            retrying={isPending || isSyncing}
+                            onRetry={() => void handleSync()}
+                        />
+
                         {/*{view === "list" && (*/}
-                          <p className="p-5 text-sm uppercase font-bold grid grid-cols-8 border-none">
-                              <span className="col-span-4">Opening</span>
-                              <span className="col-span-1">Accuracy</span>
-                              <span className="col-span-1">Phase</span>
-                              <span className="col-span-1">Termination</span>
-                              <span className="col-span-1">Played</span>
-                          </p>
+                        <p className="p-5 text-sm uppercase font-bold grid grid-cols-8 border-none">
+                            <span className="col-span-4">Opening</span>
+                            <span className="col-span-1">Accuracy</span>
+                            <span className="col-span-1">Phase</span>
+                            <span className="col-span-1">Termination</span>
+                            <span className="col-span-1">Played</span>
+                        </p>
                         {/*)}*/}
                     </header>
 
@@ -100,19 +130,19 @@ export default function GamesPage() {
                       <GamesGrid games={games} />
                     )}*/}
 
-                     {/*@ts-expect-error*/}
+                    {/*@ts-expect-error*/}
                     <GamesList games={games} />
 
                     {hasNextPage && (
-                    <section className="w-1/5 mx-auto m-7.5">
-                        <Button
-                            variant="outline"
-                            className="border"
-                            label="Load More"
-                            onClick={() => fetchNextPage()}
-                            loading={isFetchingNextPage}
-                        />
-                    </section>
+                        <section className="w-1/5 mx-auto m-7.5">
+                            <Button
+                                variant="outline"
+                                className="border"
+                                label="Load More"
+                                onClick={() => fetchNextPage()}
+                                loading={isFetchingNextPage}
+                            />
+                        </section>
                     )}
                 </>
             )}

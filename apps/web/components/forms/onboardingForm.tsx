@@ -6,11 +6,11 @@ import { Fieldset } from "@headlessui/react";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Account, platforms } from "@/components/chess/account";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/ui/header";
-import { api } from "@/lib/trpc";
-import { Platform } from "@/types/chess";
+import { api, queryClient } from "@/lib/trpc";
 
 export const OnboardingForm = () => {
     const [selectedPlatform, setSelectedPlatform] = useState(platforms[0]);
@@ -20,16 +20,27 @@ export const OnboardingForm = () => {
     const { mutateAsync, isPending } = useMutation(
         api.user.onboard.mutationOptions({
             onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: api.chess.getActiveJobs.pathKey() });
+                queryClient.invalidateQueries({ queryKey: api.chess.getFailedJobs.pathKey() });
                 router.push("/dashboard");
             },
         }),
     );
 
     const handleOnboard = async () => {
-        mutateAsync({
-            platform: selectedPlatform.value,
-            username,
-        });
+        if (username.trim().length < 2) {
+            toast.error("Username must be at least 2 characters");
+            return;
+        }
+
+        try {
+            await mutateAsync({
+                platform: selectedPlatform.value,
+                username,
+            });
+        } catch {
+            return;
+        }
     };
 
     return (

@@ -3,9 +3,10 @@
 import { Fieldset } from "@headlessui/react";
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Account, platforms } from "@/components/chess/account";
-import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
 import { api, queryClient } from "@/lib/trpc";
 import { useModalStore } from "@/stores/modalStore";
 
@@ -50,11 +51,21 @@ export const EditAccount = () => {
 
     const handleUpdate = async () => {
         if (!modalData?.accountId) return;
-        updateAccount({
-            id: modalData.accountId,
-            platform: selectedPlatform.value,
-            username,
-        });
+
+        if (username.trim().length < 2) {
+            toast.error("Username must be at least 2 characters");
+            return;
+        }
+
+        try {
+            await updateAccount({
+                id: modalData.accountId,
+                platform: selectedPlatform.value,
+                username,
+            });
+        } catch {
+            return;
+        }
     };
 
     const handleDelete = async () => {
@@ -65,9 +76,13 @@ export const EditAccount = () => {
             return;
         }
 
-        deleteAccount({
-            id: modalData.accountId,
-        });
+        try {
+            await deleteAccount({
+                id: modalData.accountId,
+            });
+        } catch {
+            return;
+        }
     };
 
     return (
@@ -87,12 +102,7 @@ export const EditAccount = () => {
                         loading={isDeleting}
                         onClick={handleDelete}
                     />
-                    <Button
-                        variant="solid"
-                        label="Update"
-                        loading={isUpdating}
-                        onClick={handleUpdate}
-                    />
+                    <Button variant="solid" label="Update" loading={isUpdating} onClick={handleUpdate} />
                 </div>
             </Fieldset>
         </Modal>
