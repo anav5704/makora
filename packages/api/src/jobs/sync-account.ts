@@ -2,17 +2,13 @@ import { db, JobStatus, Platform } from "@makora/db";
 import type { SyncAccountJob } from "@makora/queue";
 import { UnrecoverableError } from "bullmq";
 import { type ParsedPgn, parsePgn } from "../../lib/parsePgn";
-import { createProgressReporter, type ProgressCallback } from "./job-progress";
-
-type ReportProgress = (percentage: number) => Promise<void>;
 
 const ARCHIVE_CONCURRENCY = 5;
 const GAME_CHUNK_SIZE = 50;
 const FETCH_TIMEOUT_MS = 30000;
 const LICHESS_FETCH_TIMEOUT_MS = 120000;
 
-export async function syncAccount(input: SyncAccountJob, jobId: string, onProgress?: ProgressCallback): Promise<void> {
-    const reportProgress = createProgressReporter(jobId, onProgress);
+export async function syncAccount(input: SyncAccountJob, jobId: string): Promise<void> {
     const { account } = input;
     const syncedAt = account.syncedAt ? new Date(account.syncedAt) : null;
 
@@ -22,16 +18,16 @@ export async function syncAccount(input: SyncAccountJob, jobId: string, onProgre
     });
 
     if (account.platform === Platform.CHESS_COM) {
-        await syncChessComAccount(account.username, account.id, syncedAt, reportProgress);
+        await syncChessComAccount(account.username, account.id, syncedAt);
     }
 
     if (account.platform === Platform.LICHESS_ORG) {
-        await syncLichessAccount(account.username, account.id, syncedAt, reportProgress);
+        await syncLichessAccount(account.username, account.id, syncedAt);
     }
 
     await db.main.job.update({
         where: { id: jobId },
-        data: { status: JobStatus.COMPLETED, progress: 100 },
+        data: { status: JobStatus.COMPLETED },
     });
 }
 
@@ -113,12 +109,7 @@ async function fetchChessComArchive(
     return games;
 }
 
-async function syncChessComAccount(
-    username: string,
-    accountId: string,
-    syncedAt: Date | null,
-    reportProgress: ReportProgress,
-): Promise<void> {
+async function syncChessComAccount(username: string, accountId: string, syncedAt: Date | null): Promise<void> {
     const res = await fetch(`https://api.chess.com/pub/player/${username}/games/archives`, {
         signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
@@ -173,9 +164,6 @@ async function syncChessComAccount(
 
         const newGames = await filterNewGames(accountId, results.flat());
         await insertGames(accountId, newGames);
-
-        const completed = Math.min(i + ARCHIVE_CONCURRENCY, archives.length);
-        await reportProgress(archives.length ? (completed / archives.length) * 100 : 100);
     }
 
     console.log(`Synced chess.com account ${username} (${skipped} non-losses skipped)`);
@@ -190,12 +178,7 @@ async function syncChessComAccount(
     });
 }
 
-async function syncLichessAccount(
-    username: string,
-    accountId: string,
-    syncedAt: Date | null,
-    reportProgress: ReportProgress,
-): Promise<void> {
+async function syncLichessAccount(username: string, accountId: string, syncedAt: Date | null): Promise<void> {
     let url = `https://lichess.org/api/games/user/${username}?sort=dateAsc`;
 
     if (syncedAt) {
@@ -254,9 +237,6 @@ async function syncLichessAccount(
 
         const newGames = await filterNewGames(accountId, parsed);
         await insertGames(accountId, newGames);
-
-        const completed = Math.min(i + GAME_CHUNK_SIZE, pgns.length);
-        await reportProgress(pgns.length ? (completed / pgns.length) * 100 : 100);
     }
 
     console.log(`Synced lichess account ${username} (${skipped} non-losses skipped)`);

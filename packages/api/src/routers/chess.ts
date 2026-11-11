@@ -23,10 +23,10 @@ export const chessRouter = router({
             const game = await db.main.game.findUnique({
                 where: {
                     id: input.id,
-              },
-              include: {
-                evaluation: true
-              }
+                },
+                include: {
+                    evaluation: true,
+                },
             });
 
             if (!game) return;
@@ -88,11 +88,11 @@ export const chessRouter = router({
                     }),
                 },
                 include: {
-                  evaluation: {
-                    select: {
-                      accuracy: true
-                    }
-                  },
+                    evaluation: {
+                        select: {
+                            accuracy: true,
+                        },
+                    },
                     account: {
                         select: {
                             platform: true,
@@ -101,212 +101,264 @@ export const chessRouter = router({
                 },
                 take: PAGE_SIZE,
                 ...(cursor && { skip: 1 }),
-                ...(cursor && { cursor: {
-                    id: cursor
-                }}),
-                orderBy: [
-                    { date: { sort: "desc", nulls: "last" } },
-                    { id: "desc" },
-                ],
+                ...(cursor && {
+                    cursor: {
+                        id: cursor,
+                    },
+                }),
+                orderBy: [{ date: { sort: "desc", nulls: "last" } }, { id: "desc" }],
             });
 
             return {
-              games,
-              cursor: games.length === PAGE_SIZE ? games.at(-1)?.id : undefined
+                games,
+                cursor: games.length === PAGE_SIZE ? games.at(-1)?.id : undefined,
             };
         }),
-  analyzeGame: protectedProcedure
-    .input(
-      z.object({
-        gameId: z.string()
-      })
-    )
-    .mutation(async ({ ctx, input: { gameId } }) => {
-      const evaluation = await db.main.evaluation.findUnique({
-        where: {
-          gameId
-        }
-      })
+    analyzeGame: protectedProcedure
+        .input(
+            z.object({
+                gameId: z.string(),
+            }),
+        )
+        .mutation(async ({ ctx, input: { gameId } }) => {
+            const evaluation = await db.main.evaluation.findUnique({
+                where: {
+                    gameId,
+                },
+            });
 
-      if (evaluation) return { jobId: null }
+            if (evaluation) return { jobId: null };
 
-      const userId = ctx.session.user.id;
+            const userId = ctx.session.user.id;
 
-      await failStaleJobs(userId);
+            await failStaleJobs(userId);
 
-      const inFlight = await db.main.job.findFirst({
-        where: {
-          userId,
-          type: "ANALYZE_GAME",
-          status: { in: [JobStatus.QUEUED, JobStatus.ACTIVE] },
-          payload: { path: ["gameId"], equals: gameId },
-        },
-        select: { id: true },
-      });
+            const inFlight = await db.main.job.findFirst({
+                where: {
+                    userId,
+                    type: "ANALYZE_GAME",
+                    status: { in: [JobStatus.QUEUED, JobStatus.ACTIVE] },
+                    payload: { path: ["gameId"], equals: gameId },
+                },
+                select: { id: true },
+            });
 
-      if (inFlight) return { jobId: inFlight.id };
+            if (inFlight) return { jobId: inFlight.id };
 
-      const job = await db.main.job.create({
-        data: {
-          type: "ANALYZE_GAME",
-          userId,
-          payload: { gameId },
-        }
-      })
+            const job = await db.main.job.create({
+                data: {
+                    type: "ANALYZE_GAME",
+                    userId,
+                    payload: { gameId },
+                },
+            });
 
-      await getAnalysisQueue().add("analyze-game", { gameId }, { jobId: job.id })
+            await getAnalysisQueue().add("analyze-game", { gameId }, { jobId: job.id });
 
-      return { jobId: job.id }
-    }),
+            return { jobId: job.id };
+        }),
     getJobStatus: protectedProcedure
-    .input(
-      z.object({
-        jobId: z.string()
-      })
-    )
-    .query(async ({ ctx, input }) => {
-      return db.main.job.findFirst({
-        where: {
-          id: input.jobId,
-          userId: ctx.session.user.id,
-        },
-        select: {
-          id: true,
-          type: true,
-          status: true,
-          progress: true,
-          error: true,
-          updatedAt: true,
-        }
-      })
-    }),
+        .input(
+            z.object({
+                jobId: z.string(),
+            }),
+        )
+        .query(async ({ ctx, input }) => {
+            return db.main.job.findFirst({
+                where: {
+                    id: input.jobId,
+                    userId: ctx.session.user.id,
+                },
+                select: {
+                    id: true,
+                    type: true,
+                    status: true,
+                    progress: true,
+                    error: true,
+                    updatedAt: true,
+                },
+            });
+        }),
     getJobsStatus: protectedProcedure
-    .input(
-      z.object({
-        jobIds: z.array(z.string()).min(1).max(50)
-      })
-    )
-    .query(async ({ ctx, input }) => {
-      return db.main.job.findMany({
-        where: {
-          id: { in: input.jobIds },
-          userId: ctx.session.user.id,
-        },
-        select: {
-          id: true,
-          type: true,
-          status: true,
-          progress: true,
-          error: true,
-          updatedAt: true,
-        }
-      })
-    }),
-    getActiveJobs: protectedProcedure
-    .query(async ({ ctx }) => {
-      return db.main.job.findMany({
-        where: {
-          userId: ctx.session.user.id,
-          status: { in: [JobStatus.QUEUED, JobStatus.ACTIVE] },
-        },
-        select: {
-          id: true,
-          type: true,
-          status: true,
-          progress: true,
-          error: true,
-          updatedAt: true,
-          payload: true,
-        },
-        orderBy: {
-          updatedAt: "desc",
-        },
-      })
+        .input(
+            z.object({
+                jobIds: z.array(z.string()).min(1).max(50),
+            }),
+        )
+        .query(async ({ ctx, input }) => {
+            return db.main.job.findMany({
+                where: {
+                    id: { in: input.jobIds },
+                    userId: ctx.session.user.id,
+                },
+                select: {
+                    id: true,
+                    type: true,
+                    status: true,
+                    progress: true,
+                    error: true,
+                    updatedAt: true,
+                },
+            });
+        }),
+    getActiveJobs: protectedProcedure.query(async ({ ctx }) => {
+        const jobs = await db.main.job.findMany({
+            where: {
+                userId: ctx.session.user.id,
+                status: { in: [JobStatus.QUEUED, JobStatus.ACTIVE] },
+            },
+            select: {
+                id: true,
+                type: true,
+                status: true,
+                error: true,
+                updatedAt: true,
+                createdAt: true,
+                payload: true,
+            },
+            orderBy: {
+                updatedAt: "desc",
+            },
+        });
+
+        return Promise.all(
+            jobs.map(async (job) => {
+                const syncAccount = job.type === "SYNC_ACCOUNT" ? readSyncAccount(job.payload) : null;
+                const gameId = job.type === "ANALYZE_GAME" ? readGameId(job.payload) : null;
+                let gamesSaved: number | null = null;
+                let movesDone: number | null = null;
+                let movesTotal: number | null = null;
+
+                if (syncAccount) {
+                    gamesSaved = await db.main.game.count({
+                        where: {
+                            accountId: syncAccount.id,
+                            createdAt: { gte: job.createdAt },
+                        },
+                    });
+                }
+
+                if (gameId) {
+                    const game = await db.main.game.findUnique({
+                        where: { id: gameId },
+                        select: { moves: true, analysisCheckpoint: true },
+                    });
+                    movesTotal = game?.moves.length ?? null;
+                    movesDone = countSavedMoves(game?.analysisCheckpoint);
+                }
+
+                return {
+                    id: job.id,
+                    type: job.type,
+                    status: job.status,
+                    error: job.error,
+                    updatedAt: job.updatedAt,
+                    payload: job.payload,
+                    username: syncAccount?.username ?? null,
+                    platform: syncAccount?.platform ?? null,
+                    gamesSaved,
+                    movesDone,
+                    movesTotal,
+                };
+            }),
+        );
     }),
     getFailedJobs: protectedProcedure.query(async ({ ctx }) => {
-      const jobs = await db.main.job.findMany({
-        where: {
-          userId: ctx.session.user.id,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-        take: 200,
-        select: {
-          id: true,
-          type: true,
-          status: true,
-          error: true,
-          payload: true,
-        },
-      })
+        const jobs = await db.main.job.findMany({
+            where: {
+                userId: ctx.session.user.id,
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
+            take: 200,
+            select: {
+                id: true,
+                type: true,
+                status: true,
+                error: true,
+                payload: true,
+            },
+        });
 
-      const seen = new Set<string>()
-      const failed: {
-        id: string
-        type: (typeof jobs)[number]["type"]
-        error: string | null
-        username: string | null
-        gameId: string | null
-      }[] = []
+        const seen = new Set<string>();
+        const failed: {
+            id: string;
+            type: (typeof jobs)[number]["type"];
+            error: string | null;
+            username: string | null;
+            gameId: string | null;
+        }[] = [];
 
-      for (const job of jobs) {
-        const syncAccount = job.type === "SYNC_ACCOUNT" ? readSyncAccount(job.payload) : null
-        const gameId = job.type === "ANALYZE_GAME" ? readGameId(job.payload) : null
-        const key = syncAccount ? `sync:${syncAccount.id}` : gameId ? `analyze:${gameId}` : null
+        for (const job of jobs) {
+            const syncAccount = job.type === "SYNC_ACCOUNT" ? readSyncAccount(job.payload) : null;
+            const gameId = job.type === "ANALYZE_GAME" ? readGameId(job.payload) : null;
+            const key = syncAccount ? `sync:${syncAccount.id}` : gameId ? `analyze:${gameId}` : null;
 
-        if (!key || seen.has(key)) continue
-        seen.add(key)
+            if (!key || seen.has(key)) continue;
+            seen.add(key);
 
-        if (job.status !== JobStatus.FAILED) continue
+            if (job.status !== JobStatus.FAILED) continue;
 
-        failed.push({
-          id: job.id,
-          type: job.type,
-          error: job.error,
-          username: syncAccount?.username ?? null,
-          gameId,
-        })
-      }
+            failed.push({
+                id: job.id,
+                type: job.type,
+                error: job.error,
+                username: syncAccount?.username ?? null,
+                gameId,
+            });
+        }
 
-      return failed
+        return failed;
     }),
     updateNotes: protectedProcedure
-    .input(
-      z.object({
-        gameId: z.string(),
-        notes: z.string()
-      })
-    )
-    .mutation(async ({ input }) => {
-      await db.main.game.update({
-        where: {
-          id: input.gameId,
-        },
-        data: {
-          notes: input.notes
-        }
-        })
-    })
+        .input(
+            z.object({
+                gameId: z.string(),
+                notes: z.string(),
+            }),
+        )
+        .mutation(async ({ input }) => {
+            await db.main.game.update({
+                where: {
+                    id: input.gameId,
+                },
+                data: {
+                    notes: input.notes,
+                },
+            });
+        }),
 });
 
-function readSyncAccount(payload: unknown): { id: string; username: string } | null {
-  if (!payload || typeof payload !== "object") return null
+function countSavedMoves(value: unknown): number {
+    if (!Array.isArray(value)) return 0;
+    return value.filter((move) => {
+        if (!move || typeof move !== "object") return false;
+        return typeof (move as { accuracy?: unknown }).accuracy === "number";
+    }).length;
+}
 
-  const account = (payload as { account?: unknown }).account
-  if (!account || typeof account !== "object") return null
+function readSyncAccount(
+    payload: unknown,
+): { id: string; username: string; platform: "CHESS_COM" | "LICHESS_ORG" } | null {
+    if (!payload || typeof payload !== "object") return null;
 
-  const id = (account as { id?: unknown }).id
-  const username = (account as { username?: unknown }).username
+    const account = (payload as { account?: unknown }).account;
+    if (!account || typeof account !== "object") return null;
 
-  if (typeof id !== "string" || typeof username !== "string") return null
+    const id = (account as { id?: unknown }).id;
+    const username = (account as { username?: unknown }).username;
+    const platform = (account as { platform?: unknown }).platform;
 
-  return { id, username }
+    if (typeof id !== "string" || typeof username !== "string") return null;
+    if (platform !== "CHESS_COM" && platform !== "LICHESS_ORG") return null;
+
+    return { id, username, platform };
 }
 
 function readGameId(payload: unknown): string | null {
-  if (!payload || typeof payload !== "object") return null
+    if (!payload || typeof payload !== "object") return null;
 
-  const gameId = (payload as { gameId?: unknown }).gameId
-  return typeof gameId === "string" ? gameId : null
+    const gameId = (payload as { gameId?: unknown }).gameId;
+    return typeof gameId === "string" ? gameId : null;
 }
