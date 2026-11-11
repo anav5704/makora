@@ -11,10 +11,6 @@ const GAME_CHUNK_SIZE = 50;
 const FETCH_TIMEOUT_MS = 30000;
 const LICHESS_FETCH_TIMEOUT_MS = 120000;
 
-const serializeError = (error: unknown): string => {
-    return error instanceof Error ? error.message : "Unknown error";
-};
-
 export async function syncAccount(input: SyncAccountJob, jobId: string, onProgress?: ProgressCallback): Promise<void> {
     const reportProgress = createProgressReporter(jobId, onProgress);
     const { account } = input;
@@ -25,26 +21,18 @@ export async function syncAccount(input: SyncAccountJob, jobId: string, onProgre
         data: { status: JobStatus.ACTIVE },
     });
 
-    try {
-        if (account.platform === Platform.CHESS_COM) {
-            await syncChessComAccount(account.username, account.id, syncedAt, reportProgress);
-        }
-
-        if (account.platform === Platform.LICHESS_ORG) {
-            await syncLichessAccount(account.username, account.id, syncedAt, reportProgress);
-        }
-
-        await db.main.job.update({
-            where: { id: jobId },
-            data: { status: JobStatus.COMPLETED, progress: 100 },
-        });
-    } catch (error) {
-        await db.main.job.update({
-            where: { id: jobId },
-            data: { status: JobStatus.FAILED, error: serializeError(error) },
-        });
-        throw error;
+    if (account.platform === Platform.CHESS_COM) {
+        await syncChessComAccount(account.username, account.id, syncedAt, reportProgress);
     }
+
+    if (account.platform === Platform.LICHESS_ORG) {
+        await syncLichessAccount(account.username, account.id, syncedAt, reportProgress);
+    }
+
+    await db.main.job.update({
+        where: { id: jobId },
+        data: { status: JobStatus.COMPLETED, progress: 100 },
+    });
 }
 
 async function filterNewGames(accountId: string, games: ParsedPgn[]): Promise<ParsedPgn[]> {

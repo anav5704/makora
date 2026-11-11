@@ -217,6 +217,9 @@ importers:
       '@makora/api':
         specifier: workspace:*
         version: link:../../packages/api
+      '@makora/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@makora/queue':
         specifier: workspace:*
         version: link:../../packages/queue
