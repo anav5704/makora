@@ -6,6 +6,7 @@ import { useQueryState } from "nuqs";
 import { AreaChart } from "@/components/charts/areaChart";
 import { BarList } from "@/components/charts/barList";
 import { DonutChart } from "@/components/charts/donutChat";
+import { RadarChart } from "@/components/charts/radarChart";
 import { DateRange, type DateRangeValue } from "@/components/insights/dateRange";
 import { Metrics } from "@/components/insights/metrics";
 import { Loader } from "@/components/loader";
@@ -40,6 +41,15 @@ export default function InsightsPage() {
 
     const metrics = dashboard?.metrics;
     const distributions = dashboard?.distributions;
+    const phases = ["Opening", "Middlegame", "Endgame"];
+    const mistakesByPhase = phases.map((phase, index) => ({
+        phase,
+        value: metrics?.mistakesByPhase?.[index] ?? 0,
+    }));
+    const accuracyByPhase = phases.map((phase, index) => ({
+        phase,
+        value: metrics?.accuracyByPhase?.[index] ?? 0,
+    }));
 
     return (
         <main className="divide-y divide-zinc-800">
@@ -90,6 +100,11 @@ export default function InsightsPage() {
                         data={dashboard?.openings ?? []}
                         getHref={(name) => `/games?search=${encodeURIComponent(name)}`}
                     />
+
+                    <section className="grid grid-cols-2 divide-x divide-zinc-800">
+                        <RadarChart title="Mistakes by Phase" data={mistakesByPhase} />
+                        <RadarChart title="Accuracy by Phase" data={accuracyByPhase} unit="%" domain={[0, 100]} />
+                    </section>
 
                     <section className="grid grid-cols-3 divide-x divide-y divide-zinc-800">
                         <DonutChart
