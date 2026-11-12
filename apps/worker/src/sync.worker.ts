@@ -9,6 +9,6 @@ void startWorker({
         if (!job.id) throw new Error("Job is missing an id");
 
         const input = syncAccountJobSchema.parse(job.data);
-        await syncAccount(input, job.id, (percentage) => job.updateProgress(percentage));
+        await syncAccount(input, job.id);
     },
 });

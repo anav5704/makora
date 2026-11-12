@@ -27,13 +27,14 @@ export const GameControls = ({
     setMoveIndex,
     onNavigate,
 }: GameControlsProps) => {
-    const { progressOf, settled } = useJobTracker();
+    const { jobs, settled } = useJobTracker();
     const { data: failedJobs } = useQuery(api.chess.getFailedJobs.queryOptions());
 
-    const analysisProgress = progressOf(
-        (job) => job.type === "ANALYZE_GAME" && (job.payload as { gameId?: string } | null)?.gameId === game.id,
-    );
-    const isAnalyzing = analysisProgress !== null;
+    const analysisJob =
+        jobs.find(
+            (job) => job.type === "ANALYZE_GAME" && (job.payload as { gameId?: string } | null)?.gameId === game.id,
+        ) ?? null;
+    const isAnalyzing = analysisJob !== null;
     const failedAnalysis = failedJobs?.find((job) => job.type === "ANALYZE_GAME" && job.gameId === game.id) ?? null;
 
     const settledNonceRef = useRef(0);
@@ -76,7 +77,11 @@ export const GameControls = ({
             {game.evaluation ? (
                 <p className="p-5 text-center">Accuracy: {game.evaluation.accuracy}%</p>
             ) : isAnalyzing ? (
-                <p className="p-5 text-center">{`Analyzing... ${analysisProgress}%`}</p>
+                <p className="p-5 text-center">
+                    {analysisJob?.movesTotal
+                        ? `Analyzing · ${analysisJob.movesDone ?? 0} of ${analysisJob.movesTotal}`
+                        : "Analyzing…"}
+                </p>
             ) : failedAnalysis ? (
                 <div>
                     <p className="px-5 pt-5 text-center text-sm text-rose-400">

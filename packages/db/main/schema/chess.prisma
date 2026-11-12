@@ -33,6 +33,7 @@ model Game {
   color       Color
   notes       String?
   reviewed    Boolean      @default(false)
+  analysisCheckpoint Json?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   accountId   String

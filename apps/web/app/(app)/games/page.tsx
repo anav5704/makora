@@ -2,11 +2,12 @@
 
 import type { Color, GamePhase, Platform, Termination, TimeControl } from "@makora/db";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
+import { LoaderCircle } from "lucide-react";
 import { useQueryState } from "nuqs";
 import { useEffect, useRef } from "react";
 import { GamesList } from "@/components/games/gamesList";
 import { Search } from "@/components/games/search";
-import { SyncFailures } from "@/components/jobs/sync-failures";
+import { SyncFailures, SyncProgress } from "@/components/jobs/sync-failures";
 import { Loader } from "@/components/loader";
 import { Button } from "@/components/ui/button";
 import { useJobTracker } from "@/hooks/useJobTracker";
@@ -26,14 +27,15 @@ export default function GamesPage() {
     const [reviewed] = useQueryState("reviewed");
     // const [view] = useQueryState("view")
 
-    const { progressOf, settled } = useJobTracker();
+    const { jobs, settled } = useJobTracker();
     const { data: failedJobs } = useQuery(api.chess.getFailedJobs.queryOptions());
 
-    const syncProgress = progressOf((job) => job.type === "SYNC_ACCOUNT");
-    const isSyncing = syncProgress !== null;
+    const syncJobs = jobs.filter((job) => job.type === "SYNC_ACCOUNT");
+    const isSyncing = syncJobs.length > 0;
     const syncFailures = (failedJobs ?? []).filter((job) => job.type === "SYNC_ACCOUNT");
 
     const settledNonceRef = useRef(0);
+    const sentinelRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (settled.nonce === settledNonceRef.current) return;
@@ -68,7 +70,22 @@ export default function GamesPage() {
         ),
     );
 
-    const games = data?.pages.flatMap((page) => page.games) ?? [];
+    const pages = (data as unknown as { pages: Array<{ games: unknown[] }> } | undefined)?.pages ?? [];
+    const games = pages.flatMap((page) => page.games);
+
+    useEffect(() => {
+        const node = sentinelRef.current;
+        if (!node || !hasNextPage) return;
+
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0]?.isIntersecting && !isFetchingNextPage) {
+                void fetchNextPage();
+            }
+        });
+
+        observer.observe(node);
+        return () => observer.disconnect();
+    }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
     const handleSync = async () => {
         try {
@@ -98,13 +115,14 @@ export default function GamesPage() {
                             <Button
                                 className="border"
                                 variant="outline"
-                                label={isSyncing ? `Syncing ${syncProgress}%` : "Sync"}
+                                label="Sync"
                                 onClick={handleSync}
                                 loading={isPending}
                                 tracking={isSyncing}
                             />
                         </section>
 
+                        <SyncProgress jobs={syncJobs} />
                         <SyncFailures
                             jobs={syncFailures}
                             retrying={isPending || isSyncing}
@@ -133,17 +151,12 @@ export default function GamesPage() {
                     {/*@ts-expect-error*/}
                     <GamesList games={games} />
 
-                    {hasNextPage && (
-                        <section className="w-1/5 mx-auto m-7.5">
-                            <Button
-                                variant="outline"
-                                className="border"
-                                label="Load More"
-                                onClick={() => fetchNextPage()}
-                                loading={isFetchingNextPage}
-                            />
-                        </section>
-                    )}
+                    {hasNextPage ? <div ref={sentinelRef} className="h-px" /> : null}
+                    {isFetchingNextPage ? (
+                        <div className="grid place-content-center py-5">
+                            <LoaderCircle size={24} className="animate-spin" />
+                        </div>
+                    ) : null}
                 </>
             )}
         </main>

@@ -55,6 +55,11 @@ button {
     @apply cursor-pointer!;
 }
 
+[data-sonner-toast] [data-icon],
+[data-sonner-toast] [data-icon] svg {
+    color: #ffffff !important;
+}
+
 .text-gradient-white {
 	@apply bg-linear-to-br from-white to-zinc-500 bg-clip-text text-transparent;
 }

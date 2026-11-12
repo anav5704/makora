@@ -10,7 +10,7 @@ interface RawStockfishResult {
     mateIn?: number;
 }
 
-interface StockfishResult {
+export interface StockfishResult {
     accuracy: number;
     bestMove: string;
     postMoveEval: string;
@@ -235,10 +235,12 @@ const collectPositions = (moves: string[]): Position[] => {
 const analyzePositions = async (
     positions: Position[],
     depth: number,
-    onPositionAnalyzed?: () => void,
-): Promise<RawStockfishResult[]> => {
-    const results = new Array<RawStockfishResult>(positions.length);
-    if (positions.length === 0) return results;
+    options?: {
+        skip?: ReadonlySet<number>;
+        onPosition?: (index: number, result: RawStockfishResult) => Promise<void>;
+    },
+): Promise<void> => {
+    if (positions.length === 0) return;
 
     const failure: { current: Error | null } = { current: null };
     let cursor = 0;
@@ -250,16 +252,16 @@ const analyzePositions = async (
             await engine.start();
 
             for (;;) {
-                // Another engine already failed; stop pulling new work.
                 if (failure.current) return;
 
                 const index = cursor++;
                 if (index >= positions.length) return;
+                if (options?.skip?.has(index)) continue;
 
                 try {
                     if (engine.isDead) await engine.start();
-                    results[index] = await engine.analyze(positions[index] as Position, depth);
-                    onPositionAnalyzed?.();
+                    const result = await engine.analyze(positions[index] as Position, depth);
+                    await options?.onPosition?.(index, result);
                 } catch (error) {
                     failure.current ??= error instanceof Error ? error : new Error(String(error));
                     return;
@@ -276,64 +278,80 @@ const analyzePositions = async (
     await Promise.all(Array.from({ length: workerCount }, worker));
 
     if (failure.current) throw failure.current;
+};
 
-    return results;
+const buildMoveResult = (
+    positions: Position[],
+    moveIndex: number,
+    before: RawStockfishResult,
+    after: RawStockfishResult,
+): StockfishResult => {
+    const isWhiteMove = !(positions[moveIndex * 2] as Position).blackToMove;
+    const winBefore = before.isMate ? (before.evaluation > 0 ? 100 : 0) : calculateWinPercent(before.evaluation);
+    const winAfter = after.isMate ? (after.evaluation > 0 ? 100 : 0) : calculateWinPercent(after.evaluation);
+    const winDrop = isWhiteMove ? winBefore - winAfter : winAfter - winBefore;
+    const movingSideWinBefore = isWhiteMove ? winBefore : 100 - winBefore;
+    const movingSideWinAfter = isWhiteMove ? winAfter : 100 - winAfter;
+
+    return {
+        accuracy: Math.round(calculateAccuracy(movingSideWinBefore, movingSideWinAfter) * 100) / 100,
+        postMoveEval: formatEval(after.evaluation, after.isMate, after.mateIn),
+        bestMove: after.bestMove,
+        winDrop: Math.round(winDrop * 100) / 100,
+    };
 };
 
 export const getEval = async (
     moves: string[],
     playerColor: "WHITE" | "BLACK",
     timeControl: TimeControl,
-    onProgress?: (completed: number, total: number) => void,
+    options?: {
+        saved?: Array<StockfishResult | null>;
+        onMove?: (index: number, result: StockfishResult) => Promise<void>;
+    },
 ): Promise<EvalResult> => {
     const depth = DEPTH_BY_TIME_CONTROL[timeControl];
     const positions = collectPositions(moves);
+    const results: Array<StockfishResult | null> = moves.map((_, index) => options?.saved?.[index] ?? null);
+    const skip = new Set<number>();
+    const halves = new Map<number, { before?: RawStockfishResult; after?: RawStockfishResult }>();
+    const checkpointed = new Set<number>();
 
-    let analyzed = 0;
-    const reportPosition = () => {
-        analyzed += 1;
-        // Two positions per move, and the callback speaks in moves.
-        onProgress?.(Math.min(Math.floor(analyzed / 2), moves.length), moves.length);
+    results.forEach((result, index) => {
+        if (!result) return;
+        skip.add(index * 2);
+        skip.add(index * 2 + 1);
+        checkpointed.add(index);
+    });
+
+    const onPosition = async (positionIndex: number, raw: RawStockfishResult): Promise<void> => {
+        const moveIndex = Math.floor(positionIndex / 2);
+        const slot = halves.get(moveIndex) ?? {};
+        if (positionIndex % 2 === 0) slot.before = raw;
+        else slot.after = raw;
+        halves.set(moveIndex, slot);
+
+        if (!slot.before || !slot.after || checkpointed.has(moveIndex)) return;
+        checkpointed.add(moveIndex);
+
+        const result = buildMoveResult(positions, moveIndex, slot.before, slot.after);
+        results[moveIndex] = result;
+        await options?.onMove?.(moveIndex, result);
     };
 
-    const raw = await analyzePositions(positions, depth, reportPosition);
-
-    const results: StockfishResult[] = [];
-
-    for (const [index] of moves.entries()) {
-        const resultBefore = raw[index * 2] as RawStockfishResult;
-        const resultAfter = raw[index * 2 + 1] as RawStockfishResult;
-        const isWhiteMove = !(positions[index * 2] as Position).blackToMove;
-
-        const winBefore = resultBefore.isMate
-            ? resultBefore.evaluation > 0
-                ? 100
-                : 0
-            : calculateWinPercent(resultBefore.evaluation);
-
-        const winAfter = resultAfter.isMate
-            ? resultAfter.evaluation > 0
-                ? 100
-                : 0
-            : calculateWinPercent(resultAfter.evaluation);
-
-        const winDrop = isWhiteMove ? winBefore - winAfter : winAfter - winBefore;
-        const movingSideWinBefore = isWhiteMove ? winBefore : 100 - winBefore;
-        const movingSideWinAfter = isWhiteMove ? winAfter : 100 - winAfter;
-        const accuracy = calculateAccuracy(movingSideWinBefore, movingSideWinAfter);
-        const postMoveEval = formatEval(resultAfter.evaluation, resultAfter.isMate, resultAfter.mateIn);
-
-        results.push({
-            accuracy: Math.round(accuracy * 100) / 100,
-            postMoveEval,
-            bestMove: resultAfter.bestMove,
-            winDrop: Math.round(winDrop * 100) / 100,
-        });
+    if (skip.size < positions.length) {
+        await analyzePositions(positions, depth, { skip, onPosition });
     }
+
+    if (results.some((result) => result === null)) {
+        throw new Error("Analysis finished with missing moves");
+    }
+
+    const finished = results as StockfishResult[];
 
     const playerMoves: number[] = [];
 
-    results.forEach((result, index) => {
+    finished.forEach((result, index) => {
         const isWhiteMove = index % 2 === 0;
         const isPlayerMove = (playerColor === "WHITE" && isWhiteMove) || (playerColor === "BLACK" && !isWhiteMove);
 
@@ -348,7 +366,7 @@ export const getEval = async (
             : 0;
 
     return {
-        results,
+        results: finished,
         accuracy,
     };
 };

@@ -9,6 +9,6 @@ void startWorker({
         if (!job.id) throw new Error("Job is missing an id");
 
         const input = analyzeGameJobSchema.parse(job.data);
-        await analyzeGame(input, job.id, (percentage) => job.updateProgress(percentage));
+        await analyzeGame(input, job.id);
     },
 });
