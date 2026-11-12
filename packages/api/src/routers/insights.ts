@@ -23,6 +23,7 @@ const RANGE_MS: Record<Exclude<DashboardInput["range"], "all">, number> = {
 };
 
 const BLUNDER_WINDROP = 20;
+const MISTAKE_WINDROP = 10;
 
 // Opening: moves 1-10, middlegame: 11-30, endgame: 31+.
 const phaseOfPly = (ply: number): 0 | 1 | 2 => {
@@ -90,6 +91,7 @@ export const insightsRouter = router({
                 blundersPerGame: null as number | null,
                 worstCollapse: null as { gameId: string; winDrop: number } | null,
                 blundersByPhase: null as number[] | null,
+                mistakesByPhase: null as number[] | null,
                 accuracyByPhase: null as number[] | null,
             },
             overTime: [] as { date: string; losses: number; accuracy: number }[],
@@ -134,6 +136,7 @@ export const insightsRouter = router({
         let worstCollapse: { gameId: string; winDrop: number } | null = null;
 
         const phaseBlunders = [0, 0, 0];
+        const phaseMistakes = [0, 0, 0];
         const phaseAccuracySums = [0, 0, 0];
         const phaseAccuracyCounts = [0, 0, 0];
 
@@ -157,6 +160,10 @@ export const insightsRouter = router({
                 }
 
                 if (typeof result.winDrop !== "number") return;
+
+                if (result.winDrop >= MISTAKE_WINDROP) {
+                    phaseMistakes[phase] += 1;
+                }
 
                 if (result.winDrop >= BLUNDER_WINDROP) {
                     blunders += 1;
@@ -254,6 +261,8 @@ export const insightsRouter = router({
                 worstCollapse,
                 blundersByPhase:
                     evaluations.length > 0 ? rate(phaseBlunders, evaluations.length) : null,
+                mistakesByPhase:
+                    evaluations.length > 0 ? rate(phaseMistakes, evaluations.length) : null,
                 accuracyByPhase:
                     evaluations.length > 0 ? average(phaseAccuracySums, phaseAccuracyCounts) : null,
             },
